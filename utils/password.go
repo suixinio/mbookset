@@ -17,7 +17,7 @@ const (
 	saltSize           = 16
 	delimiter          = "|"
 	stretchingPassword = 500
-	saltLocalSecret    = "wWnN&^bnmIIIEbW**WL"
+	saltLocalSecret    = "D*y#r%Y$of1KWE&g"
 )
 
 func PasswordHash(pass string) (string, error) {

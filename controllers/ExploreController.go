@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/astaxie/beego"
 	"math"
 	"mbook/models"
@@ -13,6 +14,7 @@ type ExploreController struct {
 }
 
 func (c *ExploreController) Index() {
+	fmt.Println(c)
 	var (
 		cid       int // 分类id
 		cate      models.Category

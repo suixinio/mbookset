@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/astaxie/beego"
 	"mbook/models"
 )
@@ -12,6 +13,7 @@ type HomeController struct {
 func (c *HomeController) Index() {
 	if cates, err := new(models.Category).GetCates(-1, 1); err == nil {
 		c.Data["Cates"] = cates
+		fmt.Println(cates)
 	} else {
 		beego.Error(err.Error())
 	}
