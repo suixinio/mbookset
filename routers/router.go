@@ -9,7 +9,7 @@ func init() {
 	//首页&分类&详情
 	beego.Router("/", &controllers.HomeController{}, "get:Index")
 	beego.Router("/explore", &controllers.ExploreController{}, "*:Index")
-	beego.Router("/books/:key", &controllers.DocumentController{}, "*:Index")
+	beego.Router("/book/:key", &controllers.DocumentController{}, "*:Index")
 
 	//读书
 	beego.Router("/read/:key/:id", &controllers.DocumentController{}, "*:Read")
@@ -60,4 +60,11 @@ func init() {
 	beego.Router("/manager/update-cate", &controllers.ManagerController{}, "get:UpdateCate")
 	beego.Router("/manager/del-cate", &controllers.ManagerController{}, "get:DelCate")
 	beego.Router("/manager/icon-cate", &controllers.ManagerController{}, "post:UpdateCateIcon")
+
+	//文章
+	//读文章的路由
+	beego.Router("/blogs", &controllers.BlogController{}, "*:List")
+	//beego.Router("/blog-attach/:id:int/:attach_id:int", &controllers.BlogController{},"get:Download")
+	beego.Router("/blog-:id([0-9]+).html",&controllers.BlogController{}, "*:Index")
+
 }

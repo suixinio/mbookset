@@ -124,7 +124,7 @@
                                     <li class="clearfix">
                                         <div class="col-xs-12">
 {{/*                                            <img src="{{showImg .Avatar "avatar"}}" class="img-thumbnail img-circle img-responsive" alt="自由编程">*/}}
-                                            <img src="{{.Avatar}}" class="img-thumbnail img-circle img-responsive" alt="自由编程">
+                                            <img onerror="this.src='/static/images/avatar.png'" src="{{.Avatar}}" class="img-thumbnail img-circle img-responsive" alt="{{.Nickname}}">
                                             <span class="username">{{.Nickname}}</span>
                                             <span>评分:<i class="mbook-star star-{{.Score}}"></i></span>
                                             <span class="text-muted hidden-xs pull-right">{{date .TimeCreate "Y-m-d H:i:s"}}</span>

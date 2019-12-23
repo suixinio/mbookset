@@ -6,6 +6,7 @@ import (
 	"mbook/utils"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func sysinit() {
@@ -47,4 +48,7 @@ func registerFuncionts() {
 	beego.AddFuncMap("showImg", utils.ShowImg)
 	beego.AddFuncMap("IsFollow", new(models.Fans).Relation)
 	beego.AddFuncMap("isubstr", utils.Substr)
+	beego.AddFuncMap("date_format", func(t time.Time, format string) string {
+		return t.Local().Format(format)
+	})
 }

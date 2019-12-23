@@ -98,13 +98,10 @@ func (c *DocumentController) Read() {
 	identify := c.Ctx.Input.Param(":key")
 	id := c.GetString(":id")
 	token := c.GetString("token")
-	fmt.Println("fmt>" + identify)
-	fmt.Println("fmt>" + id)
 
 	if identify == "" || id == "" {
 		c.Abort("404")
 	}
-	fmt.Println("fmt>11")
 
 	//没开启匿名
 	//if !c.EnableAnonymous && c.Member == nil {
@@ -178,6 +175,7 @@ func (c *DocumentController) Read() {
 		}
 		data.DocTitle = doc.DocumentName
 		data.Body = doc.Release
+		data.Title = doc.DocumentName
 		data.Id = doc.DocumentId
 		data.View = doc.Vcnt
 		data.UpdatedAt = doc.ModifyTime.Format("2006-01-02 15:04:05")
@@ -196,6 +194,7 @@ func (c *DocumentController) Read() {
 	c.Data["Book"] = bookData
 	c.Data["Result"] = template.HTML(tree)
 	c.Data["Title"] = doc.DocumentName
+	c.Data["SeoTitle"] = doc.DocumentName
 	c.Data["DocId"] = doc.DocumentId
 	c.Data["Content"] = template.HTML(doc.Release)
 	c.Data["View"] = doc.Vcnt

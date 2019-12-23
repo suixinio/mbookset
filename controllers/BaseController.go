@@ -55,6 +55,12 @@ func (c *BaseController) Prepare() {
 	//设置全局配置
 	c.Option = make(map[string]string)
 	c.Option["ENABLED_CAPTCHA"] = "false"
+	controller, action := c.GetControllerAndAction()
+
+	c.Data["ActionName"] = action
+	c.Data["ControllerName"] = controller
+
+
 }
 
 // Ajax接口返回Json

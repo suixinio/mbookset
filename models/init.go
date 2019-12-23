@@ -20,6 +20,7 @@ func init() {
 		new(Fans),
 		new(Comments),
 		new(Score),
+		new(Blog),
 	)
 }
 
@@ -73,6 +74,11 @@ func TNComments() string {
 func TNScore() string {
 	return "md_score"
 }
+
+func TNBlogs() string {
+	return "md_blogs"
+}
+
 
 /*
 * Tool Funcs
