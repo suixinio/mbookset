@@ -42,7 +42,7 @@ func (c *BookController) Index() {
 	}
 	//封面图片
 	for idx, book := range books {
-		book.Cover = utils.ShowImg(book.Cover, "cover")
+		//book.Cover = utils.ShowImg(book.Cover, "cover")
 		books[idx] = book
 	}
 	b, err := json.Marshal(books)
@@ -51,7 +51,6 @@ func (c *BookController) Index() {
 	} else {
 		c.Data["Result"] = template.JS(string(b))
 	}
-
 	c.Data["Private"] = private
 	c.TplName = "book/index.html"
 }

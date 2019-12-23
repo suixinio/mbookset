@@ -46,7 +46,8 @@
                     <li class="clearfix">
                         <div class="col-sm-3 col-md-3 col-lg-2 col-xs-3 " style="padding: 0px;">
                             <a href="{{urlfor "DocumentController.Index" ":key" .Identify}}" target="_blank" title="{{.BookName}}">
-                                <img onerror="this.src='/static/images/book.png'" src="{{showImg .Cover "cover"}}" alt="{{.BookName}}" class="img-responsive border-cover-img">
+{{/*                                <img onerror="this.src='/static/images/book.png'" src="{{showImg .Cover "cover"}}" alt="{{.BookName}}" class="img-responsive border-cover-img">*/}}
+                                <img onerror="this.src='/static/images/book.png'" src="{{.Cover}}" alt="{{.BookName}}" class="img-responsive border-cover-img">
                             </a>
                         </div>
                         <div class="col-sm-9 col-md-9 col-lg-10 col-xs-9">

@@ -49,8 +49,8 @@ func ShowImg(img string, style ...string) (url string) {
 	case StoreLocal:
 		url = img
 	}
-	fmt.Println(img)
-	fmt.Println(url)
+	//fmt.Println(img)
+	//fmt.Println(url)
 	return url
 }
 

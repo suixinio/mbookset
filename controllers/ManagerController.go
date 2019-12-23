@@ -2,13 +2,12 @@ package controllers
 
 import (
 	"fmt"
+	"mbook/models"
+	"mbook/utils/store"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"mbook/models"
-	"mbook/utils"
-	"mbook/utils/store"
 
 	"github.com/astaxie/beego"
 )
@@ -47,7 +46,7 @@ func (c *ManagerController) Category() {
 		if strings.TrimSpace(item.Icon) == "" {
 			item.Icon = "/static/images/icon.png"
 		} else {
-			item.Icon = utils.ShowImg(item.Icon)
+			//item.Icon = utils.ShowImg(item.Icon)
 		}
 		if item.Pid == 0 {
 			parents = append(parents, item)

@@ -24,7 +24,8 @@
                         {{range .Fans}}
                         <div class="col-xs-4 col-sm-2 col-md-2 text-center fans-item">
                             <a target="_blank" title="{{.Nickname}}" href="{{urlfor "UserController.Index" ":username" .Account}}" class="tooltips">
-                                <img class="thumbnail img-circle " src="{{showImg .Avatar "avatar"}}" alt="">
+{{/*                                <img class="thumbnail img-circle " src="{{showImg .Avatar "avatar"}}" alt="">*/}}
+                                <img class="thumbnail img-circle " src="{{.Avatar}}" alt="">
                             </a>
                             <div>
                                 <a target="_blank" title="{{.Nickname}}" href="{{urlfor "UserController.Index" ":username" .Account}}"  class="fans-username tooltips">{{.Nickname}}</a>
