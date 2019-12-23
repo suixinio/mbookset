@@ -51,7 +51,7 @@ func (c *BaseController) Prepare() {
 	}
 	c.Data["Member"] = c.Member
 	c.Data["BaseUrl"] = c.BaseUrl()
-	c.Data["SITE_NAME"] = "MBOOK"
+	c.Data["SITE_NAME"] = "BookSet"
 	//设置全局配置
 	c.Option = make(map[string]string)
 	c.Option["ENABLED_CAPTCHA"] = "false"

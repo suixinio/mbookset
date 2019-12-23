@@ -114,3 +114,4 @@ modules.xml
 # diy
 store/
 learn/
+conf/app.conf

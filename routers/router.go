@@ -58,7 +58,7 @@ func init() {
 	beego.Router("/setting", &controllers.SettingController{}, "*:Index")
 	beego.Router("/setting/upload", &controllers.SettingController{}, "*:Upload")
 	//
-	////管理后台
+	//管理后台
 	beego.Router("/manager/category", &controllers.ManagerController{}, "post,get:Category")
 	beego.Router("/manager/update-cate", &controllers.ManagerController{}, "get:UpdateCate")
 	beego.Router("/manager/del-cate", &controllers.ManagerController{}, "get:DelCate")
