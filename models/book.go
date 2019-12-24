@@ -225,3 +225,68 @@ func (m *Book) RefreshDocumentCount(bookId int) {
 		beego.Error(err)
 	}
 }
+
+
+// minRole 最小的角色权限
+//conf.BookFounder
+//conf.BookAdmin
+//conf.BookEditor
+//conf.BookObserver
+func (m *Book) HasProjectAccess(identify string, memberId int, minRole int) bool {
+	book := NewBook()
+	rel := NewRelationship()
+	o := orm.NewOrm()
+	o.QueryTable(book).Filter("identify", identify).One(book, "book_id")
+	if book.BookId <= 0 {
+		return false
+	}
+	o.QueryTable(rel).Filter("book_id", book.BookId).Filter("member_id", memberId).One(rel)
+	if rel.RelationshipId <= 0 {
+		return false
+	}
+	return rel.RoleId <= minRole
+}
+
+
+
+func (book *Book) ToBookResult() (m *BookData) {
+	m = &BookData{}
+	m.BookId = book.BookId
+	m.BookName = book.BookName
+	m.Identify = book.Identify
+	m.OrderIndex = book.OrderIndex
+	m.Description = strings.Replace(book.Description, "\r\n", "<br/>", -1)
+	m.PrivatelyOwned = book.PrivatelyOwned
+	m.PrivateToken = book.PrivateToken
+	m.DocCount = book.DocCount
+	//m.CommentStatus = book.CommentStatus
+	m.CommentCount = book.CommentCount
+	m.CreateTime = book.CreateTime
+	m.ModifyTime = book.ModifyTime
+	m.Cover = book.Cover
+	m.MemberId = book.MemberId
+	//m.Label = book.Label
+	m.Status = book.Status
+	m.Editor = book.Editor
+	//m.Theme = book.Theme
+	m.Vcnt = book.Vcnt
+	//m.Star = book.Star
+	m.Score = book.Score
+	m.ScoreFloat = utils.ScoreFloat(book.Score)
+	m.CntScore = book.CntScore
+	m.CntComment = book.CntComment
+	m.Author = book.Author
+	m.AuthorURL = book.AuthorURL
+	//m.AdTitle = book.AdTitle
+	//m.AdLink = book.AdLink
+	//m.Lang = book.Lang
+
+	//if book.Theme == "" {
+	//	m.Theme = "default"
+	//}
+
+	if book.Editor == "" {
+		m.Editor = "markdown"
+	}
+	return m
+}

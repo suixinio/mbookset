@@ -1,4 +1,4 @@
-package common
+package cryptil
 
 import (
 	"crypto/hmac"

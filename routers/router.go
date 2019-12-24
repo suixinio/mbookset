@@ -33,14 +33,15 @@ func init() {
 	beego.Router("/api/:key/delete", &controllers.DocumentController{}, "post:Delete")
 
 	//用户图书管理
-	beego.Router("/book", &controllers.BookController{}, "*:Index")                         //我的图书
-	beego.Router("/book/create", &controllers.BookController{}, "post:Create")              //创建图书
-	beego.Router("/book/:key/setting", &controllers.BookController{}, "*:Setting")          //图书设置
-	beego.Router("/book/setting/upload", &controllers.BookController{}, "post:UploadCover") //图书封面
-	beego.Router("/book/star/:id", &controllers.BookController{}, "*:Collection")           //收藏图书
-	beego.Router("/book/setting/save", &controllers.BookController{}, "post:SaveBook")      //保存
-	beego.Router("/book/:key/release", &controllers.BookController{}, "post:Release")       //发布
-	beego.Router("/book/setting/token", &controllers.BookController{}, "post:CreateToken")  //创建Token
+	beego.Router("/books", &controllers.BookController{}, "*:Index")                         //我的图书
+	beego.Router("/book/create", &controllers.BookController{}, "post:Create")               //创建图书
+	beego.Router("/book/:key/setting", &controllers.BookController{}, "*:Setting")           //图书设置
+	beego.Router("/book/setting/upload", &controllers.BookController{}, "post:UploadCover")  //图书封面
+	beego.Router("/book/star/:id", &controllers.BookController{}, "*:Collection")            //收藏图书
+	beego.Router("/book/setting/save", &controllers.BookController{}, "post:SaveBook")       //保存
+	beego.Router("/book/:key/release", &controllers.BookController{}, "post:Release")        //发布
+	beego.Router("/book/setting/token", &controllers.BookController{}, "post:CreateToken")   //创建Token
+	beego.Router("/book/uploadProject", &controllers.BookController{}, "post:UploadProject") //用户上传
 
 	//个人中心
 	beego.Router("/user/:username", &controllers.UserController{}, "get:Index")                 //分享
@@ -65,6 +66,6 @@ func init() {
 	//读文章的路由
 	beego.Router("/blogs", &controllers.BlogController{}, "*:List")
 	//beego.Router("/blog-attach/:id:int/:attach_id:int", &controllers.BlogController{},"get:Download")
-	beego.Router("/blog-:id([0-9]+).html",&controllers.BlogController{}, "*:Index")
+	beego.Router("/blog-:id([0-9]+).html", &controllers.BlogController{}, "*:Index")
 
 }

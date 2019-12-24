@@ -42,6 +42,21 @@ func (m *DocumentStore) InsertOrUpdate(fields ...string) (err error) {
 	return
 }
 
+//插入或者更新
+//func (this *DocumentStore) InsertOrUpdate(ds DocumentStore, fields ...string) (err error) {
+//	o := orm.NewOrm()
+//	var one DocumentStore
+//	o.QueryTable(TNDocumentStore()).Filter("document_id", ds.DocumentId).One(&one, "document_id")
+//
+//	if one.DocumentId > 0 {
+//		_, err = o.Update(&ds, fields...)
+//	} else {
+//		_, err = o.Insert(&ds)
+//	}
+//	return
+//}
+
+
 //删除记录
 func (m *DocumentStore) Delete(docId ...interface{}) {
 	if len(docId) > 0 {

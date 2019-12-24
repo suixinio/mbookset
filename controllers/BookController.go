@@ -4,18 +4,27 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"gopkg.in/russross/blackfriday.v2"
+
 	"html/template"
+	"io/ioutil"
+	"mbook/common"
+	"mbook/conf"
+	"mbook/models"
+	"mbook/utils"
+	"mbook/utils/filetil"
+	"mbook/utils/graphics"
+	"mbook/utils/html2md"
+	"mbook/utils/mdtil"
+	"mbook/utils/store"
+	"mbook/utils/ziptil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-
-	"mbook/common"
-	"mbook/models"
-	"mbook/utils"
-	"mbook/utils/graphics"
-	"mbook/utils/store"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
@@ -384,9 +393,15 @@ func (c *BookController) Comment() {
 	}
 	bookId, _ := c.GetInt(":id")
 	if bookId > 0 {
+		// todo 这个地方应该使用事务，其中任何一个发生错误都需要回滚
 		if err := new(models.Comments).AddComments(c.Member.MemberId, bookId, content); err != nil {
 			c.JsonResult(1, err.Error())
 		}
+		// 评论数+1
+		if err := models.IncOrDec(models.TNBook(), "cnt_comment", fmt.Sprintf("book_id=%v", bookId), true, 1); err != nil {
+			c.JsonResult(1, err.Error())
+		}
+
 		c.JsonResult(0, "评论成功")
 	}
 	c.JsonResult(1, "文档图书不存在")
@@ -424,4 +439,232 @@ func (c *BookController) CreateToken() {
 		c.JsonResult(1, "删除令牌失败")
 	}
 	c.JsonResult(0, "ok", "")
+}
+
+//上传项目
+func (this *BookController) UploadProject() {
+	//处理步骤
+	//1、接受上传上来的zip文件，并存放到store/temp目录下
+	//2、解压zip到当前目录，然后移除非图片文件
+	//3、将文件夹移动到uploads目录下
+
+	identify := this.GetString("identify")
+
+	if !models.NewBook().HasProjectAccess(identify, this.Member.MemberId, conf.BookEditor) {
+		this.JsonResult(1, "无操作权限")
+	}
+
+	book, _ := models.NewBookData().FindByIdentify(identify, this.Member.MemberId)
+	if book.BookId == 0 {
+		this.JsonResult(1, "项目不存在")
+	}
+
+	f, h, err := this.GetFile("zipfile")
+	if err != nil {
+		this.JsonResult(1, err.Error())
+	}
+	defer f.Close()
+	if strings.ToLower(filepath.Ext(h.Filename)) != ".zip" && strings.ToLower(filepath.Ext(h.Filename)) != ".epub" {
+		this.JsonResult(1, "请上传指定格式文件")
+	}
+	tmpFile := "store/" + identify + ".zip" //保存的文件名
+	if err := this.SaveToFile("zipfile", tmpFile); err == nil {
+		go this.unzipToData(book.BookId, identify, tmpFile, h.Filename)
+	} else {
+		beego.Error(err.Error())
+	}
+	this.JsonResult(0, "上传成功")
+}
+
+//将zip压缩文件解压并录入数据库
+//@param            book_id             项目id(其实有想不标识了可以不要这个的，但是这里的项目标识只做目录)
+//@param            identify            项目标识
+//@param            zipfile             压缩文件
+//@param            originFilename      上传文件的原始文件名
+func (this *BookController) unzipToData(bookId int, identify, zipFile, originFilename string) {
+
+	//说明：
+	//OSS中的图片存储规则为"projects/$identify/项目中图片原路径"
+	//本地存储规则为"uploads/projects/$identify/项目中图片原路径"
+
+	projectRoot := "" //项目根目录
+
+	//解压目录
+	unzipPath := "store/" + identify
+
+	//如果存在相同目录，则率先移除
+	if err := os.RemoveAll(unzipPath); err != nil {
+		beego.Error(err.Error())
+	}
+	os.MkdirAll(unzipPath, os.ModePerm)
+
+	imgMap := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".bmp": true, ".svg": true, ".webp": true}
+
+	defer func() {
+		os.Remove(zipFile)      //最后删除上传的临时文件
+		os.RemoveAll(unzipPath) //删除解压后的文件夹
+	}()
+
+	//注意：这里的prefix必须是判断是否是GitHub之前的prefix
+	if err := ziptil.Unzip(zipFile, unzipPath); err != nil {
+		beego.Error("解压失败", zipFile, err.Error())
+		return
+	}
+
+	//读取文件，把图片文档录入oss
+	if files, err := filetil.ScanFiles(unzipPath); err == nil {
+		projectRoot = this.getProjectRoot(files)
+		// 替换[img] [a]
+		this.replaceToAbs(projectRoot, identify)
+
+		//ModelStore := new(models.DocumentStore)
+		//文档对应的标识
+		for _, file := range files {
+			if !file.IsDir {
+				ext := strings.ToLower(filepath.Ext(file.Path))
+				if ok, _ := imgMap[ext]; ok { //图片，录入oss
+					switch utils.StoreType {
+					//case utils.StoreOss:
+					//	if err := store.ModelStoreOss.MoveToOss(file.Path, "projects/"+identify+strings.TrimPrefix(file.Path, projectRoot), false, false); err != nil {
+					//		beego.Error(err)
+					//	}
+					case utils.StoreLocal:
+						//if err := store.ModelStoreLocal.MoveToStore(file.Path, "uploads/projects/"+identify+strings.TrimPrefix(file.Path, projectRoot)); err != nil {
+						if err := store.MoveToStore(file.Path, "uploads/projects/"+identify+strings.TrimPrefix(file.Path, projectRoot)); err != nil {
+							beego.Error(err)
+						}
+					}
+				} else if ext == ".md" || ext == ".markdown" || ext == ".html" { //markdown文档，提取文档内容，录入数据库
+					doc := new(models.Document)
+					var mdcont string
+					var htmlStr string
+					if b, err := ioutil.ReadFile(file.Path); err == nil {
+						if ext == ".md" || ext == ".markdown" {
+							mdcont = strings.TrimSpace(string(b))
+							htmlStr = mdtil.Md2html(mdcont)
+						} else {
+							htmlStr = string(b)
+							mdcont = html2md.Convert(htmlStr)
+						}
+						if !strings.HasPrefix(mdcont, "[TOC]") {
+							mdcont = "[TOC]\r\n\r\n" + mdcont
+						}
+						// 页面上看到的内容
+						doc.Release = htmlStr
+						doc.DocumentName = utils.ParseTitleFromMdHtml(htmlStr)
+						doc.BookId = bookId
+						//文档标识
+						doc.Identify = strings.Replace(strings.Trim(strings.TrimPrefix(file.Path, projectRoot), "/"), "/", "-", -1)
+						doc.Identify = strings.Replace(doc.Identify, ")", "", -1)
+						doc.MemberId = this.Member.MemberId
+						doc.OrderSort = 1
+						if strings.HasSuffix(strings.ToLower(file.Name), "summary.md") {
+							doc.OrderSort = 0
+						}
+						if strings.HasSuffix(strings.ToLower(file.Name), "summary.html") {
+							mdcont += "<bookstack-summary></bookstack-summary>"
+							// 生成带$的文档标识，阅读BaseController.go代码可知，
+							// 要使用summary.md的排序功能，必须在链接中带上符号$
+							mdcont = strings.Replace(mdcont, "](", "]($", -1)
+							// 去掉可能存在的url编码的右括号，否则在url译码后会与markdown语法混淆
+							mdcont = strings.Replace(mdcont, "%29", "", -1)
+							mdcont, _ = url.QueryUnescape(mdcont)
+							doc.OrderSort = 0
+							doc.Identify = "summary.md"
+						}
+						if docId, err := doc.InsertOrUpdate(); err == nil {
+							ds := models.DocumentStore{DocumentId: int(docId), Markdown: mdcont,}
+							if err := ds.InsertOrUpdate("markdown"); err != nil {
+								//if err := ModelStore.InsertOrUpdate(models.DocumentStore{DocumentId: int(docId),Markdown:   mdcont,}, "markdown"); err != nil {
+								//if err := ModelStore.InsertOrUpdate(models.DocumentStore{DocumentId: int(docId),Markdown:   mdcont,}, "markdown"); err != nil {
+								beego.Error(err)
+							}
+						} else {
+							beego.Error(err.Error())
+						}
+					} else {
+						beego.Error("读取文档失败：", file.Path, "错误信息：", err)
+					}
+
+				}
+			}
+		}
+	}
+}
+
+//获取文档项目的根目录
+func (this *BookController) getProjectRoot(fl []filetil.FileList) (root string) {
+	//获取项目的根目录(感觉这个函数封装的不是很好，有更好的方法，请通过issue告知我，谢谢。)
+	i := 1000
+	for _, f := range fl {
+		if !f.IsDir {
+			if cnt := strings.Count(f.Path, "/"); cnt < i {
+				root = filepath.Dir(f.Path)
+				i = cnt
+			}
+		}
+	}
+	return
+}
+
+//查找并替换markdown文件中的路径，把图片链接替换成url的相对路径，把文档间的链接替换成【$+文档标识链接】
+func (this *BookController) replaceToAbs(projectRoot string, identify string) {
+	imgBaseUrl := "/uploads/projects/" + identify
+	switch utils.StoreType {
+	case utils.StoreLocal:
+		// 添加store
+		imgBaseUrl = "/uploads/projects/" + identify
+	case utils.StoreOss:
+		//imgBaseUrl = this.BaseController.OssDomain + "/projects/" + identify
+		imgBaseUrl = "/projects/" + identify
+	}
+	files, _ := filetil.ScanFiles(projectRoot)
+	for _, file := range files {
+		if ext := strings.ToLower(filepath.Ext(file.Path)); ext == ".md" || ext == ".markdown" {
+			//mdb ==> markdown byte
+			mdb, _ := ioutil.ReadFile(file.Path)
+			mdCont := string(mdb)
+			basePath := filepath.Dir(file.Path)
+			basePath = strings.Trim(strings.Replace(basePath, "\\", "/", -1), "/")
+			basePathSlice := strings.Split(basePath, "/")
+			l := len(basePathSlice)
+			b, _ := ioutil.ReadFile(file.Path)
+			output := blackfriday.Run(b)
+			doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(output)))
+
+			//图片链接处理
+			doc.Find("img").Each(func(i int, selection *goquery.Selection) {
+				//非http开头的图片地址，即是相对地址
+				if src, ok := selection.Attr("src"); ok && !strings.HasPrefix(strings.ToLower(src), "http") {
+					newSrc := src //默认为旧地址
+					if cnt := strings.Count(src, "../"); cnt < l { //以或者"../"开头的路径
+						newSrc = strings.Join(basePathSlice[0:l-cnt], "/") + "/" + strings.TrimLeft(src, "./")
+					}
+					//newSrc = imgBaseUrl + "/" + strings.TrimLeft(strings.TrimPrefix(strings.TrimLeft(newSrc, "./"), projectRoot), "/")
+					newSrc = imgBaseUrl + strings.TrimLeft(strings.TrimPrefix(strings.TrimLeft(newSrc, "./"), projectRoot), "/")
+					mdCont = strings.Replace(mdCont, src, newSrc, -1)
+				}
+			})
+
+			//a标签链接处理。要注意判断有锚点的情况
+			doc.Find("a").Each(func(i int, selection *goquery.Selection) {
+				if href, ok := selection.Attr("href"); ok && !strings.HasPrefix(strings.ToLower(href), "http") && !strings.HasPrefix(href, "#") {
+					newHref := href //默认
+					if cnt := strings.Count(href, "../"); cnt < l {
+						newHref = strings.Join(basePathSlice[0:l-cnt], "/") + "/" + strings.TrimLeft(href, "./")
+					}
+					newHref = strings.TrimPrefix(strings.Trim(newHref, "/"), projectRoot)
+					if !strings.HasPrefix(href, "$") { //原链接不包含$符开头，否则表示已经替换过了。
+						newHref = "$" + strings.Replace(strings.Trim(newHref, "/"), "/", "-", -1)
+						slice := strings.Split(newHref, "$")
+						if ll := len(slice); ll > 0 {
+							newHref = "$" + slice[ll-1]
+						}
+						mdCont = strings.Replace(mdCont, "]("+href, "]("+newHref, -1)
+					}
+				}
+			})
+			ioutil.WriteFile(file.Path, []byte(mdCont), os.ModePerm)
+		}
+	}
 }

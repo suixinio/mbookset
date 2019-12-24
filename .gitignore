@@ -112,7 +112,7 @@ modules.xml
 # End of https://www.gitignore.io/api/go,intellij+all
 
 # diy
-store/
 learn/
 conf/app.conf
 uploads/
+store/

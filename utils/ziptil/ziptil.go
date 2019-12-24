@@ -1,10 +1,11 @@
-package common
+package ziptil
 
 import (
 	"archive/zip"
 	"errors"
 	"io"
 	"io/ioutil"
+	"mbook/utils/filetil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,15 +61,15 @@ func Zip(dest string, filepath ...string) (err error) {
 	}
 	defer fzip.Close()
 
-	var filelist []FileList
+	var filelist []filetil.FileList
 	for _, file := range filepath {
 		if info, err := os.Stat(file); err == nil {
 			if info.IsDir() { //目录，则扫描文件
-				if f, _ := ScanFiles(file); len(f) > 0 {
+				if f, _ := filetil.ScanFiles(file); len(f) > 0 {
 					filelist = append(filelist, f...)
 				}
 			} else { //文件
-				filelist = append(filelist, FileList{
+				filelist = append(filelist, filetil.FileList{
 					IsDir: false,
 					Name:  info.Name(),
 					Path:  file,

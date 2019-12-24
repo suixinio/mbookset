@@ -90,16 +90,16 @@
                                     <div class="btns">
                                         <a :href="'{{urlfor "DocumentController.Index" ":key" ""}}' + item.identify" title="查看图书" class="btn btn-default btn-sm" data-toggle="tooltip" target="_blank"><i class="fa fa-eye"></i> 查看<span class="hidden-xs">图书</span></a>
                                         <template v-if="item.role_id != 3">
-                                            <a :href="'/api/' + item.identify + '/edit'" title="编辑图书" data-toggle="tooltip" class="btn btn-default btn-sm"><i class="fa fa-edit" aria-hidden="true"></i> 编辑<span class="hidden-xs">图书</span></a>
+                                            <a :href="'/api/' + item.identify + '/edit'" title="编辑文档" data-toggle="tooltip" class="btn btn-default btn-sm"><i class="fa fa-edit" aria-hidden="true"></i> 编辑<span class="hidden-xs">文档</span></a>
                                         </template>
                                         <a :href="'/book/' + item.identify + '/setting'" title="图书设置" class="btn btn-default btn-sm" data-toggle="tooltip" target="_blank"><i class="fa fa-cogs"></i> <span class="hidden-xs">图书</span>设置</a>
                                         {{if lt $.Member.Role 2}}
-                                        {{/*<a href="javascript:void(0);" class="btn btn-default btn-upload-zip  btn-sm" data-toggle="tooltip" :data-identify="item.identify" title="支持任意zip压缩的markdown图书导入。">*/}}
-                                            {{/*<i class="fa fa-cloud-upload"></i> 导入<span class="hidden-xs">图书</span>*/}}
-                                        {{/*</a>*/}}
-                                        {{/*<a href="javascript:void(0);" class="btn btn-default btn-pull-project-by-zip btn-sm" data-toggle="tooltip" :data-identify="item.identify" title="从任意源拉取zip压缩的markdown图书">*/}}
-                                            {{/*<i class="fa fa-link"></i> 拉取<span class="hidden-xs">图书</span>*/}}
-                                        {{/*</a>*/}}
+                                        <a href="javascript:void(0);" class="btn btn-default btn-upload-zip  btn-sm" data-toggle="tooltip" :data-identify="item.identify" title="支持任意zip压缩的markdown图书导入。">
+                                            <i class="fa fa-cloud-upload"></i> 导入<span class="hidden-xs">图书</span>
+                                        </a>
+                                        <a href="javascript:void(0);" class="btn btn-default btn-pull-project-by-zip btn-sm" data-toggle="tooltip" :data-identify="item.identify" title="从任意源拉取zip压缩的markdown图书">
+                                            <i class="fa fa-link"></i> 拉取<span class="hidden-xs">图书</span>
+                                        </a>
 
                                         {{end}}
                                         <!-- Split button -->

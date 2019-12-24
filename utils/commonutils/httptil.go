@@ -1,9 +1,10 @@
-package common
+package commonutils
 
 import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"mbook/utils/cryptil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -205,10 +206,10 @@ func CrawlFile(filelink string, savefolder string, timeout ...int) (file string,
 		filename := slice[len(slice)-1]
 		if len(strings.TrimSpace(filename)) == 0 {
 			if ext, ok := ContentTypes[ct]; ok {
-				filename = Md5Crypt(filelink) + ext
+				filename = cryptil.Md5Crypt(filelink) + ext
 			} else {
 				if iext := filepath.Ext(strings.Split(filelink, "?")[0]); len(iext) > 0 {
-					filename = Md5Crypt(filelink) + iext
+					filename = cryptil.Md5Crypt(filelink) + iext
 				}
 			}
 		}
