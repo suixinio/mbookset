@@ -22,3 +22,6 @@ db_w_password = eXsrxDGmehMRtiRR
 db_w_database = mbook
 
 # 读库
+
+
+store_type = local
