@@ -18,7 +18,7 @@ func Md2html(MarkdownContent string) (html string) {
 }
 
 //查到summary，并将内容转换成map
-func FindSummary(unzipPath string) (summary map[string]string) {
+func SummaryToMap(unzipPath string) (summary map[string]string) {
 	summary = make(map[string]string)
 
 	if files, err := filetil.ScanFiles(unzipPath); err == nil {

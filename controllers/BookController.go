@@ -512,8 +512,8 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 	}
 
 	//从获取SUMMARY
-	summary := mdtil.FindSummary(unzipPath)
-	fmt.Println(summary)
+	summary := mdtil.SummaryToMap(unzipPath)
+	//fmt.Println(summary)
 
 	//读取文件，把图片文档录入oss
 	if files, err := filetil.ScanFiles(unzipPath); err == nil {
@@ -539,7 +539,14 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 						}
 					}
 				} else if ext == ".md" || ext == ".markdown" || ext == ".html" { //markdown文档，提取文档内容，录入数据库
-					doc := new(models.Document)
+					//doc := new(models.Document)
+					// 内层替换"\\" 用于兼容windows
+					tmpIdentify := strings.Replace(strings.Trim(strings.TrimPrefix(file.Path, strings.Replace(projectRoot, "\\", "/", -1)), "/"), "/", "-", -1)
+					tmpIdentify = strings.Replace(tmpIdentify, ")", "", -1)
+
+					//为后面重新上传就会自动更新提供依据，
+					doc, _ := models.NewDocument().SelectByIdentify(bookId, tmpIdentify)
+
 					var mdcont string
 					var htmlStr string
 					if b, err := ioutil.ReadFile(file.Path); err == nil {
@@ -565,8 +572,10 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 
 						doc.BookId = bookId
 						//文档标识
-						doc.Identify = strings.Replace(strings.Trim(strings.TrimPrefix(file.Path, projectRoot), "/"), "/", "-", -1)
-						doc.Identify = strings.Replace(doc.Identify, ")", "", -1)
+						//doc.Identify = strings.Replace(strings.Trim(strings.TrimPrefix(file.Path, projectRoot), "/"), "/", "-", -1)
+						//doc.Identify = strings.Replace(doc.Identify, ")", "", -1)
+						doc.Identify = tmpIdentify
+
 						doc.MemberId = this.Member.MemberId
 						doc.OrderSort = 1
 						if strings.HasSuffix(strings.ToLower(file.Name), "summary.md") {
@@ -583,10 +592,10 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 							doc.OrderSort = 0
 							doc.Identify = "summary.md"
 						}
-						if docId, err := doc.InsertOrUpdate(); err == nil {
+						if docId, err := doc.InsertOrUpdate("document_name", "release", "vcnt"); err == nil {
 							// 写入Content，后面的上线需要从content中复制到release
 							ds := models.DocumentStore{DocumentId: int(docId), Markdown: mdcont, Content: htmlStr}
-							if err := ds.InsertOrUpdate("markdown"); err != nil {
+							if err := ds.InsertOrUpdate("markdown", "content"); err != nil {
 								//if err := ModelStore.InsertOrUpdate(models.DocumentStore{DocumentId: int(docId),Markdown:   mdcont,}, "markdown"); err != nil {
 								//if err := ModelStore.InsertOrUpdate(models.DocumentStore{DocumentId: int(docId),Markdown:   mdcont,}, "markdown"); err != nil {
 								beego.Error(err)
