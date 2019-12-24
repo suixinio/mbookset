@@ -511,6 +511,10 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 		return
 	}
 
+	//从获取SUMMARY
+	summary := mdtil.FindSummary(unzipPath)
+	fmt.Println(summary)
+
 	//读取文件，把图片文档录入oss
 	if files, err := filetil.ScanFiles(unzipPath); err == nil {
 		projectRoot = this.getProjectRoot(files)
@@ -551,7 +555,14 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 						}
 						// 页面上看到的内容
 						doc.Release = htmlStr
-						doc.DocumentName = utils.ParseTitleFromMdHtml(htmlStr)
+						// 从summary中获取name，如果是获取不到就从文中
+						DocumentName := summary[strings.Trim(strings.TrimPrefix(file.Path, strings.Replace(projectRoot, "\\", "/", -1)), "/")]
+						if DocumentName == "" {
+							doc.DocumentName = utils.ParseTitleFromMdHtml(htmlStr)
+						} else {
+							doc.DocumentName = DocumentName
+						}
+
 						doc.BookId = bookId
 						//文档标识
 						doc.Identify = strings.Replace(strings.Trim(strings.TrimPrefix(file.Path, projectRoot), "/"), "/", "-", -1)
@@ -573,7 +584,8 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 							doc.Identify = "summary.md"
 						}
 						if docId, err := doc.InsertOrUpdate(); err == nil {
-							ds := models.DocumentStore{DocumentId: int(docId), Markdown: mdcont,}
+							// 写入Content，后面的上线需要从content中复制到release
+							ds := models.DocumentStore{DocumentId: int(docId), Markdown: mdcont, Content: htmlStr}
 							if err := ds.InsertOrUpdate("markdown"); err != nil {
 								//if err := ModelStore.InsertOrUpdate(models.DocumentStore{DocumentId: int(docId),Markdown:   mdcont,}, "markdown"); err != nil {
 								//if err := ModelStore.InsertOrUpdate(models.DocumentStore{DocumentId: int(docId),Markdown:   mdcont,}, "markdown"); err != nil {
