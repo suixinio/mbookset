@@ -689,3 +689,64 @@ func (this *BookController) replaceToAbs(projectRoot string, identify string) {
 		}
 	}
 }
+
+// Delete 删除项目.
+func (this *BookController) Delete() {
+
+	bookResult, err := this.IsPermission()
+	if err != nil {
+		this.JsonResult(6001, err.Error())
+	}
+
+	if bookResult.RoleId != conf.BookFounder {
+		this.JsonResult(6002, "只有创始人才能删除项目")
+	}
+
+	//用户密码
+	pwd := this.GetString("password")
+	if m, err := models.NewMember().Login(this.Member.Account, pwd); err != nil || m.MemberId == 0 {
+		this.JsonResult(1, "项目删除失败，您的登录密码不正确")
+	}
+
+	err = models.NewBook().ThoroughDeleteBook(bookResult.BookId)
+	if err == orm.ErrNoRows {
+		this.JsonResult(6002, "项目不存在")
+	}
+
+	if err != nil {
+		logs.Error("删除项目 => ", err)
+		this.JsonResult(6003, "删除失败")
+	}
+
+	//go func() {
+	//	client := models.NewElasticSearchClient()
+	//	if errDel := client.DeleteIndex(bookResult.BookId, true); errDel != nil && client.On {
+	//		beego.Error(errDel.Error())
+	//	}
+	//}()
+
+	this.JsonResult(0, "ok")
+}
+
+// 判断是否具有管理员或管理员以上权限
+func (this *BookController) IsPermission() (*models.BookData, error) {
+
+	identify := this.GetString("identify")
+
+	book, err := models.NewBookData().FindByIdentify(identify, this.Member.MemberId)
+
+	if err != nil {
+		if err == models.ErrPermissionDenied {
+			return book, errors.New("权限不足")
+		}
+		if err == orm.ErrNoRows {
+			return book, errors.New("项目不存在")
+		}
+		return book, err
+	}
+
+	if book.RoleId != conf.BookAdmin && book.RoleId != conf.BookFounder {
+		return book, errors.New("权限不足")
+	}
+	return book, nil
+}

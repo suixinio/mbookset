@@ -58,3 +58,8 @@ func MoveToStore(tmpfile, save string) (err error) {
 	}
 	return
 }
+
+//删除文件夹
+func DelFromFolder(folder string) (err error) {
+	return os.RemoveAll(folder)
+}

@@ -2,13 +2,14 @@ package models
 
 import (
 	"fmt"
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
+	"mbook/utils"
+	"mbook/utils/store"
+	"os"
 	"strconv"
 	"strings"
 	"time"
-	"mbook/utils"
-
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
 )
 
 type Book struct {
@@ -17,7 +18,7 @@ type Book struct {
 	Identify       string    `orm:"size(100);unique" json:"identify"` //唯一标识
 	OrderIndex     int       `orm:"default(0)" json:"order_index"`
 	Description    string    `orm:"size(1000)" json:"description"`       //图书描述
-	Cover          string    `orm:"size(1000)" json:"cover"`                        //封面地址
+	Cover          string    `orm:"size(1000)" json:"cover"`             //封面地址
 	Editor         string    `orm:"size(50)" json:"editor"`              //编辑器类型: "markdown"
 	Status         int       `orm:"default(0)" json:"status"`            //状态:0 正常 ; 1 已删除
 	PrivatelyOwned int       `orm:"default(0)" json:"privately_owned"`   // 是否私有: 0 公开 ; 1 私有
@@ -31,10 +32,10 @@ type Book struct {
 	Vcnt           int       `orm:"default(0)" json:"vcnt"`              //阅读次数
 	Collection     int       `orm:"column(star);default(0)" json:"star"` //收藏次数
 	Score          int       `orm:"default(40)" json:"score"`            //评分
-	CntScore       int       //评分人数
-	CntComment     int       //评论人数
-	Author         string    `orm:"size(50)"`                      //来源
-	AuthorURL      string    `orm:"column(author_url);size(1000)"` //来源链接
+	CntScore       int                                                   //评分人数
+	CntComment     int                                                   //评论人数
+	Author         string `orm:"size(50)"`                               //来源
+	AuthorURL      string `orm:"column(author_url);size(1000)"`          //来源链接
 }
 
 //orm 回调
@@ -226,7 +227,6 @@ func (m *Book) RefreshDocumentCount(bookId int) {
 	}
 }
 
-
 // minRole 最小的角色权限
 //conf.BookFounder
 //conf.BookAdmin
@@ -246,8 +246,6 @@ func (m *Book) HasProjectAccess(identify string, memberId int, minRole int) bool
 	}
 	return rel.RoleId <= minRole
 }
-
-
 
 func (book *Book) ToBookResult() (m *BookData) {
 	m = &BookData{}
@@ -289,4 +287,97 @@ func (book *Book) ToBookResult() (m *BookData) {
 		m.Editor = "markdown"
 	}
 	return m
+}
+
+// 彻底删除项目.
+func (m *Book) ThoroughDeleteBook(id int) (err error) {
+	if id <= 0 {
+		return ErrInvalidParameter
+	}
+
+	o := orm.NewOrm()
+
+	m.BookId = id
+	if err = o.Read(m); err != nil {
+		return err
+	}
+
+	var (
+		docs  []Document
+		docId []string
+	)
+
+	o.QueryTable(new(Document)).Filter("book_id", id).Limit(10000).All(&docs, "document_id")
+	if len(docs) > 0 {
+		for _, doc := range docs {
+			docId = append(docId, strconv.Itoa(doc.DocumentId))
+		}
+	}
+
+	o.Begin()
+
+	//删除md_document_store中的文档
+	if len(docId) > 0 {
+		sql1 := fmt.Sprintf("delete from md_document_store where document_id in(%v)", strings.Join(docId, ","))
+		if _, err1 := o.Raw(sql1).Exec(); err1 != nil {
+			o.Rollback()
+			return err1
+		}
+	}
+
+	//sql2 := "DELETE FROM " + NewDocument().TableNameWithPrefix() + " WHERE book_id = ?"
+	sql2 := "DELETE FROM " + TNDocuments() + " WHERE book_id = ?"
+	_, err = o.Raw(sql2, m.BookId).Exec()
+	if err != nil {
+		o.Rollback()
+		return err
+	}
+	//sql3 := "DELETE FROM " + m.TableNameWithPrefix() + " WHERE book_id = ?"
+	sql3 := "DELETE FROM " + m.TableName() + " WHERE book_id = ?"
+
+	_, err = o.Raw(sql3, m.BookId).Exec()
+	if err != nil {
+		o.Rollback()
+		return err
+	}
+
+	//sql4 := "DELETE FROM " + NewRelationship().TableNameWithPrefix() + " WHERE book_id = ?"
+	sql4 := "DELETE FROM " + TNRelationship() + " WHERE book_id = ?"
+	_, err = o.Raw(sql4, m.BookId).Exec()
+
+	if err != nil {
+		o.Rollback()
+		return err
+	}
+
+	//if m.Label != "" {
+	//	NewLabel().InsertOrUpdateMulti(m.Label)
+	//}
+
+	if err = o.Commit(); err != nil {
+		return err
+	}
+	//删除oss中项目对应的文件夹
+	switch utils.StoreType {
+	case utils.StoreLocal: //删除本地存储，记得加上uploads
+		if m.Cover != beego.AppConfig.DefaultString("cover", "/static/images/book.png") {
+			os.Remove(strings.TrimLeft(m.Cover, "/ ")) //删除封面
+		}
+		//go store.ModelStoreLocal.DelFromFolder("uploads/projects/" + m.Identify)
+		go store.DelFromFolder("uploads/projects/" + m.Identify + "store")
+		//删除文件夹目录
+		//case utils.StoreOss:
+		//	go store.ModelStoreOss.DelOssFolder("projects/" + m.Identify)
+	}
+
+	// 删除历史记录
+	//go func() {
+	//	history := NewDocumentHistory()
+	//	for _, id := range docId {
+	//		idInt, _ := strconv.Atoi(id)
+	//		history.DeleteByDocumentId(idInt)
+	//	}
+	//}()
+
+	return
 }

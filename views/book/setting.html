@@ -39,6 +39,20 @@
                         <strong class="box-title"> 图书设置</strong>
 
                         <a style="margin-left: 5px;" href="/api/{{.Model.Identify}}/edit" class="btn btn-default btn-sm pull-right">编辑图书</a>
+
+                        {{if eq .Model.RoleId 0}}
+{{/*                            <button type="button"  class="btn btn-success btn-sm pull-right" data-toggle="modal" data-target="#transferBookModal">转让项目</button>*/}}
+                            {{if eq .Model.PrivatelyOwned 1}}
+                                <button type="button"  class="btn btn-success btn-sm pull-right" data-toggle="modal" data-target="#changePrivatelyOwnedModal" style="margin-right: 5px;">转为公有</button>
+                            {{else}}
+                                <button type="button"  class="btn btn-danger btn-sm pull-right" data-toggle="modal" data-target="#changePrivatelyOwnedModal" style="margin-right: 5px;">转为私有</button>
+                            {{end}}
+{{/*                            <a href="{{urlfor "BookController.Generate" ":key" .Model.Identify}}" style="margin-right: 5px;"  class="btn btn-success btn-sm ajax-get  pull-right">*/}}
+{{/*                                生成下载文档*/}}
+{{/*                            </a>*/}}
+                            <button type="button"  class="btn btn-danger btn-sm pull-right" style="margin-right: 5px;" data-toggle="modal" data-target="#deleteBookModal">删除项目</button>
+                        {{end}}
+
                     </div>
                 </div>
                 <div class="box-body">

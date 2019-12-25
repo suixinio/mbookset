@@ -4,11 +4,11 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"io"
-	"strings"
-	"time"
 	"mbook/common"
 	"mbook/models"
 	"mbook/utils"
+	"strings"
+	"time"
 
 	"github.com/astaxie/beego"
 )
@@ -59,7 +59,6 @@ func (c *BaseController) Prepare() {
 
 	c.Data["ActionName"] = action
 	c.Data["ControllerName"] = controller
-
 
 }
 

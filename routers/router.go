@@ -42,6 +42,7 @@ func init() {
 	beego.Router("/book/:key/release", &controllers.BookController{}, "post:Release")        //发布
 	beego.Router("/book/setting/token", &controllers.BookController{}, "post:CreateToken")   //创建Token
 	beego.Router("/book/uploadProject", &controllers.BookController{}, "post:UploadProject") //用户上传
+	beego.Router("/book/setting/delete", &controllers.BookController{}, "post:Delete")       //删除book
 
 	//个人中心
 	beego.Router("/user/:username", &controllers.UserController{}, "get:Index")                 //分享
@@ -55,7 +56,6 @@ func init() {
 	//个人设置
 	beego.Router("/setting", &controllers.SettingController{}, "*:Index")
 	beego.Router("/setting/upload", &controllers.SettingController{}, "*:Upload")
-
 	//管理后台
 	beego.Router("/manager/category", &controllers.ManagerController{}, "post,get:Category")
 	beego.Router("/manager/update-cate", &controllers.ManagerController{}, "get:UpdateCate")
