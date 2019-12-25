@@ -364,7 +364,7 @@ func (m *Book) ThoroughDeleteBook(id int) (err error) {
 			os.Remove(strings.TrimLeft(m.Cover, "/ ")) //删除封面
 		}
 		//go store.ModelStoreLocal.DelFromFolder("uploads/projects/" + m.Identify)
-		go store.DelFromFolder("uploads/projects/" + m.Identify + "store")
+		go store.DelFromFolder("uploads/projects/" + m.Identify)
 		//删除文件夹目录
 		//case utils.StoreOss:
 		//	go store.ModelStoreOss.DelOssFolder("projects/" + m.Identify)

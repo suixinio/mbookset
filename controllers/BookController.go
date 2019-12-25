@@ -518,6 +518,9 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 	//读取文件，把图片文档录入oss
 	if files, err := filetil.ScanFiles(unzipPath); err == nil {
 		projectRoot = this.getProjectRoot(files)
+		// 兼容
+		projectRoot = strings.Replace(projectRoot, "\\", "/", -1)
+
 		// 替换[img] [a]
 		this.replaceToAbs(projectRoot, identify)
 
@@ -539,9 +542,7 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 						}
 					}
 				} else if ext == ".md" || ext == ".markdown" || ext == ".html" { //markdown文档，提取文档内容，录入数据库
-					//doc := new(models.Document)
-					// 内层替换"\\" 用于兼容windows
-					tmpIdentify := strings.Replace(strings.Trim(strings.TrimPrefix(file.Path, strings.Replace(projectRoot, "\\", "/", -1)), "/"), "/", "-", -1)
+					tmpIdentify := strings.Replace(strings.Trim(strings.TrimPrefix(file.Path, projectRoot), "/"), "/", "-", -1)
 					tmpIdentify = strings.Replace(tmpIdentify, ")", "", -1)
 
 					//为后面重新上传就会自动更新提供依据，
@@ -563,7 +564,7 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 						// 页面上看到的内容
 						doc.Release = htmlStr
 						// 从summary中获取name，如果是获取不到就从文中
-						DocumentName := summary[strings.Trim(strings.TrimPrefix(file.Path, strings.Replace(projectRoot, "\\", "/", -1)), "/")]
+						DocumentName := summary[strings.Trim(strings.TrimPrefix(file.Path, projectRoot), "/")]
 						if DocumentName == "" {
 							doc.DocumentName = utils.ParseTitleFromMdHtml(htmlStr)
 						} else {
@@ -661,8 +662,8 @@ func (this *BookController) replaceToAbs(projectRoot string, identify string) {
 					if cnt := strings.Count(src, "../"); cnt < l { //以或者"../"开头的路径
 						newSrc = strings.Join(basePathSlice[0:l-cnt], "/") + "/" + strings.TrimLeft(src, "./")
 					}
-					//newSrc = imgBaseUrl + "/" + strings.TrimLeft(strings.TrimPrefix(strings.TrimLeft(newSrc, "./"), projectRoot), "/")
-					newSrc = imgBaseUrl + strings.TrimLeft(strings.TrimPrefix(strings.TrimLeft(newSrc, "./"), projectRoot), "/")
+					newSrc = imgBaseUrl + "/" + strings.TrimLeft(strings.TrimPrefix(strings.TrimLeft(newSrc, "./"), projectRoot), "/")
+					//newSrc = imgBaseUrl + strings.TrimLeft(strings.TrimPrefix(strings.TrimLeft(newSrc, "./"), projectRoot), "/")
 					mdCont = strings.Replace(mdCont, src, newSrc, -1)
 				}
 			})
