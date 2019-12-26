@@ -51,6 +51,6 @@ func registrDatabase(alias string) {
 	dbPost := beego.AppConfig.String("db_" + alias + "_port")
 	//root:123456@tcp(127.0.0.1:3306)/mbook?charset=utf8
 	orm.RegisterDataBase(dbAlias, "mysql", dbUser+":"+
-		dbPwd+"@tcp("+dbHost+":"+dbPost+")/"+dbName+"?charset=utf8", 30)
+		dbPwd+"@tcp("+dbHost+":"+dbPost+")/"+dbName+"?charset=utf8mb4", 30)
 
 }

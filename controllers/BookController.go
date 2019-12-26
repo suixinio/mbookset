@@ -565,10 +565,11 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 						doc.Release = htmlStr
 						// 从summary中获取name，如果是获取不到就从文中
 						DocumentName := summary[strings.Trim(strings.TrimPrefix(file.Path, projectRoot), "/")]
-						if DocumentName == "" {
+						if DocumentName["nameHref"] == "" {
 							doc.DocumentName = utils.ParseTitleFromMdHtml(htmlStr)
 						} else {
-							doc.DocumentName = DocumentName
+							doc.DocumentName = DocumentName["nameHref"]
+							doc.OrderSort, _ = strconv.Atoi(DocumentName["orderSort"])
 						}
 
 						doc.BookId = bookId
@@ -578,10 +579,9 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 						doc.Identify = tmpIdentify
 
 						doc.MemberId = this.Member.MemberId
-						doc.OrderSort = 1
-						if strings.HasSuffix(strings.ToLower(file.Name), "summary.md") {
-							doc.OrderSort = 0
-						}
+						//if strings.HasSuffix(strings.ToLower(file.Name), "summary.md") {
+						//	doc.OrderSort = 0
+						//}
 						if strings.HasSuffix(strings.ToLower(file.Name), "summary.html") {
 							mdcont += "<bookstack-summary></bookstack-summary>"
 							// 生成带$的文档标识，阅读BaseController.go代码可知，
@@ -590,7 +590,7 @@ func (this *BookController) unzipToData(bookId int, identify, zipFile, originFil
 							// 去掉可能存在的url编码的右括号，否则在url译码后会与markdown语法混淆
 							mdcont = strings.Replace(mdcont, "%29", "", -1)
 							mdcont, _ = url.QueryUnescape(mdcont)
-							doc.OrderSort = 0
+							//doc.OrderSort = 0
 							doc.Identify = "summary.md"
 						}
 						if docId, err := doc.InsertOrUpdate("document_name", "release", "vcnt"); err == nil {

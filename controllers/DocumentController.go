@@ -201,7 +201,7 @@ func (c *DocumentController) Read() {
 	c.Data["UpdatedAt"] = doc.ModifyTime.Format("2006-01-02 15:04:05")
 
 	//设置模版
-	fmt.Println(doc.DocumentName)
+	//fmt.Println(doc.DocumentName)
 	c.TplName = "document/default_read.html"
 }
 
@@ -618,6 +618,7 @@ func (c *DocumentController) Content() {
 		documentStore.DocumentId = int(docId)
 		if err := documentStore.InsertOrUpdate("markdown", "content"); err != nil {
 			beego.Error(err)
+			//c.JsonResult(1, "文档保存错误")
 		}
 	}
 

@@ -5,6 +5,7 @@ import (
 	"gopkg.in/russross/blackfriday.v2"
 	"io/ioutil"
 	"mbook/utils/filetil"
+	"strconv"
 	"strings"
 )
 
@@ -18,8 +19,8 @@ func Md2html(MarkdownContent string) (html string) {
 }
 
 //查到summary，并将内容转换成map
-func SummaryToMap(unzipPath string) (summary map[string]string) {
-	summary = make(map[string]string)
+func SummaryToMap(unzipPath string) (summary map[string]map[string]string) {
+	summary = make(map[string]map[string]string)
 
 	if files, err := filetil.ScanFiles(unzipPath); err == nil {
 		for _, file := range files {
@@ -37,7 +38,11 @@ func SummaryToMap(unzipPath string) (summary map[string]string) {
 							if err != nil {
 								nameHref = "blank"
 							}
-							summary[href] = nameHref
+							tmpMap := make(map[string]string)
+							tmpMap["nameHref"] = nameHref
+							tmpMap["orderSort"] = strconv.Itoa(i)
+
+							summary[href] = tmpMap
 						}
 					})
 				}
