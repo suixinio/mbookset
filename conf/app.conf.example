@@ -25,3 +25,5 @@ db_w_database = mbook
 
 
 store_type = local
+
+copyrequestbody = true

@@ -116,3 +116,4 @@ modules.xml
 /conf/app.conf
 /uploads/
 /store/
+*.tar.gz

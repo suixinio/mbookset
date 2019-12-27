@@ -470,6 +470,18 @@ $(function () {
                         openCreateCatalogDialog(node);
                     }
                 },
+                "编辑": {
+                    "separator_before": false,
+                    "separator_after": true,
+                    "_disabled": false,
+                    "label": "编辑",
+                    "icon": "fa fa-edit",
+                    "action": function (data) {
+                        var inst = $.jstree.reference(data.reference);
+                        var node = inst.get_node(data.reference);
+                        openEditCatalogDialog(node);
+                    }
+                },
                 "删除": {
                     "separator_before": false,
                     "separator_after": true,

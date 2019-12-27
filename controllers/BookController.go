@@ -147,6 +147,63 @@ func (c *BookController) SaveBook() {
 	c.JsonResult(0, "ok", bookResult)
 }
 
+//目录排序
+//文档排序.
+func (this *BookController) SaveSort() {
+
+	identify := this.Ctx.Input.Param(":key")
+	if identify == "" {
+		this.Abort("404")
+	}
+
+	bookId := 0
+	if this.Member.IsAdministrator() {
+		book, err := models.NewBook().FindByFieldFirst("identify", identify)
+		if err != nil {
+			beego.Error(err)
+		}
+		bookId = book.BookId
+	} else {
+		//bookResult, err := models.NewBookResult().FindByIdentify(identify, this.Member.MemberId)
+		bookResult, err := models.NewBookData().FindByIdentify(identify, this.Member.MemberId)
+		if err != nil {
+			beego.Error("DocumentController.Edit => ", err)
+			this.Abort("404")
+		}
+
+		if bookResult.RoleId == conf.BookObserver {
+			this.JsonResult(6002, "项目不存在或权限不足")
+		}
+		bookId = bookResult.BookId
+	}
+
+	content := this.Ctx.Input.RequestBody
+
+	var docs []struct {
+		Id     int `json:"id"`
+		Sort   int `json:"sort"`
+		Parent int `json:"parent"`
+	}
+
+	err := json.Unmarshal(content, &docs)
+	if err != nil {
+		beego.Error(err)
+		this.JsonResult(6003, "数据错误")
+	}
+
+	qs := orm.NewOrm().QueryTable("md_documents").Filter("book_id", bookId)
+	now := time.Now()
+	for _, item := range docs {
+		qs.Filter("document_id", item.Id).Update(orm.Params{
+			"parent_id":   item.Parent,
+			"order_sort":  item.Sort,
+			"modify_time": now,
+		})
+	}
+	this.JsonResult(0, "ok")
+}
+
+
 //上传封面.
 func (c *BookController) UploadCover() {
 	bookResult, err := c.isPermission()

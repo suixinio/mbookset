@@ -36,6 +36,7 @@ func init() {
 	beego.Router("/books", &controllers.BookController{}, "*:Index")                         //我的图书
 	beego.Router("/book/create", &controllers.BookController{}, "post:Create")               //创建图书
 	beego.Router("/book/:key/setting", &controllers.BookController{}, "*:Setting")           //图书设置
+	beego.Router("/book/:key/sort", &controllers.BookController{}, "post:SaveSort")          //目录排序
 	beego.Router("/book/setting/upload", &controllers.BookController{}, "post:UploadCover")  //图书封面
 	beego.Router("/book/star/:id", &controllers.BookController{}, "*:Collection")            //收藏图书
 	beego.Router("/book/setting/save", &controllers.BookController{}, "post:SaveBook")       //保存

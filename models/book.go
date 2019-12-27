@@ -89,6 +89,8 @@ func (m *Book) SearchBook(wd string, page, size int) (books []Book, cnt int, err
 	return
 }
 
+
+
 func (m *Book) GetBooksByIds(ids []int, fields ...string) (books []Book, err error) {
 	if len(ids) == 0 {
 		return
@@ -181,6 +183,14 @@ func (m *Book) SelectPage(pageIndex, pageSize, memberId int, PrivatelyOwned int)
 	}
 	return
 }
+
+//根据指定字段查询一个结果.
+func (m *Book) FindByFieldFirst(field string, value interface{}) (book *Book, err error) {
+	o := orm.NewOrm()
+	err = o.QueryTable(TNBook()).Filter(field, value).One(m)
+	return m, err
+}
+
 
 func (book *Book) ToBookData() (m *BookData) {
 	m = &BookData{}
