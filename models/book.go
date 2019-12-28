@@ -12,6 +12,21 @@ import (
 	"time"
 )
 
+//定义书籍排序类型
+type BookOrder string
+
+const (
+	OrderRecommend       BookOrder = "recommend"
+	OrderPopular         BookOrder = "popular"          //热门
+	OrderLatest          BookOrder = "latest"           //最新
+	OrderNew             BookOrder = "new"              //最新
+	OrderScore           BookOrder = "score"            //评分排序
+	OrderComment         BookOrder = "comment"          //评论排序
+	OrderStar            BookOrder = "star"             //收藏排序
+	OrderView            BookOrder = "vcnt"             //浏览排序
+	OrderLatestRecommend BookOrder = "latest-recommend" //最新推荐
+)
+
 type Book struct {
 	BookId         int       `orm:"pk;auto" json:"book_id"`
 	BookName       string    `orm:"size(500)" json:"book_name"`       //名称
@@ -47,7 +62,128 @@ func NewBook() *Book {
 	return &Book{}
 }
 
-func (m *Book) HomeData(pageIndex, pageSize int, cid int, fields ...string) (books []Book, totalCount int, err error) {
+//首页数据
+//完善根据分类查询数据
+//orderType:排序条件，可选值：recommend(推荐)、latest（）
+func (m *Book) HomeData(pageIndex, pageSize int, orderType BookOrder, cid int, fields ...string) (books []Book, totalCount int, err error) {
+	lang := "lang"
+	if cid > 0 { //针对cid>0
+		return m.homeData(pageIndex, pageSize, orderType, lang, cid, fields...)
+	}
+	o := orm.NewOrm()
+	order := "pin desc" //排序
+	condStr := ""       //查询条件
+	cond := []string{"privately_owned=0", "order_index>=0"}
+	if len(fields) == 0 {
+		fields = append(fields, "book_id", "book_name", "identify", "cover", "order_index", )
+	} else {
+		fields = append(fields, )
+	}
+	switch orderType {
+	case OrderRecommend: //推荐
+		cond = append(cond, "order_index>0")
+		order = "order_index desc"
+	case OrderLatestRecommend: //最新推荐
+		cond = append(cond, "order_index>0")
+		order = "book_id desc"
+	case OrderPopular: //受欢迎
+		order = "star desc,vcnt desc"
+	case OrderLatest, OrderNew: //最新发布
+		order = "release_time desc"
+	case OrderScore: //评分
+		order = "pin desc,score desc"
+	case OrderComment: //评论
+		order = "pin desc,cnt_comment desc"
+	case OrderStar: //收藏
+		order = "pin desc,star desc"
+	case OrderView: //收藏
+		order = "pin desc,vcnt desc"
+	}
+	if len(cond) > 0 {
+		condStr = " where " + strings.Join(cond, " and ")
+	}
+
+	lang = strings.ToLower(lang)
+	switch lang {
+	case "zh", "en", "other":
+	default:
+		lang = ""
+	}
+	if strings.TrimSpace(lang) != "" {
+		condStr = condStr + " and `lang` = '" + lang + "'"
+	}
+	sqlFmt := "select %v from md_books " + condStr
+	fieldStr := strings.Join(fields, ",")
+	sql := fmt.Sprintf(sqlFmt, fieldStr) + " order by " + order + fmt.Sprintf(" limit %v offset %v", pageSize, (pageIndex-1)*pageSize)
+	sqlCount := fmt.Sprintf(sqlFmt, "count(book_id) cnt")
+	var params []orm.Params
+	if _, err := o.Raw(sqlCount).Values(&params); err == nil {
+		if len(params) > 0 {
+			totalCount, _ = strconv.Atoi(params[0]["cnt"].(string))
+		}
+	}
+	if totalCount > 0 {
+		_, err = o.Raw(sql).QueryRows(&books)
+	}
+	return
+}
+
+//针对cid大于0
+func (m *Book) homeData(pageIndex, pageSize int, orderType BookOrder, lang string, cid int, fields ...string) (books []Book, totalCount int, err error) {
+	o := orm.NewOrm()
+	order := ""   //排序
+	condStr := "" //查询条件
+	cond := []string{"b.privately_owned=0", "b.order_index>=0"}
+	if len(fields) == 0 {
+		fields = append(fields, "book_id", "book_name", "identify", "cover", "order_index")
+	}
+	switch orderType {
+	case OrderRecommend: //推荐
+		cond = append(cond, "b.order_index>0")
+		order = "b.order_index desc"
+	case OrderPopular: //受欢迎
+		order = "b.star desc,b.vcnt desc"
+	case OrderLatest, OrderNew: //最新发布
+		order = "b.release_time desc"
+	case OrderScore: //评分
+		order = "b.score desc"
+	case OrderComment: //评论
+		order = "b.cnt_comment desc"
+	case OrderStar: //收藏
+		order = "b.star desc"
+	case OrderView: //收藏
+		order = "b.vcnt desc"
+	}
+	if cid > 0 {
+		cond = append(cond, "c.category_id="+strconv.Itoa(cid))
+	}
+	if len(cond) > 0 {
+		condStr = " where " + strings.Join(cond, " and ")
+	}
+	lang = strings.ToLower(lang)
+	switch lang {
+	case "zh", "en", "other":
+	default:
+		lang = ""
+	}
+	if strings.TrimSpace(lang) != "" {
+		condStr = condStr + " and `lang` = '" + lang + "'"
+	}
+	sqlFmt := "select %v from md_books b left join md_book_category c on b.book_id=c.book_id" + condStr
+	fieldStr := "b." + strings.Join(fields, ",b.")
+	sql := fmt.Sprintf(sqlFmt, fieldStr) + " order by " + order + fmt.Sprintf(" limit %v offset %v", pageSize, (pageIndex-1)*pageSize)
+	sqlCount := fmt.Sprintf(sqlFmt, "count(*) cnt")
+	var params []orm.Params
+	if _, err := o.Raw(sqlCount).Values(&params); err == nil {
+		if len(params) > 0 {
+			totalCount, _ = strconv.Atoi(params[0]["cnt"].(string))
+		}
+	}
+	_, err = o.Raw(sql).QueryRows(&books)
+	return
+}
+
+func (m *Book) HomeData2(pageIndex, pageSize int, cid int, fields ...string) (books []Book, totalCount int, err error) {
 	if len(fields) == 0 {
 		fields = append(fields, "book_id", "book_name", "identify", "cover", "order_index")
 	}
@@ -88,8 +224,6 @@ func (m *Book) SearchBook(wd string, page, size int) (books []Book, cnt int, err
 
 	return
 }
-
-
 
 func (m *Book) GetBooksByIds(ids []int, fields ...string) (books []Book, err error) {
 	if len(ids) == 0 {
@@ -190,7 +324,6 @@ func (m *Book) FindByFieldFirst(field string, value interface{}) (book *Book, er
 	err = o.QueryTable(TNBook()).Filter(field, value).One(m)
 	return m, err
 }
-
 
 func (book *Book) ToBookData() (m *BookData) {
 	m = &BookData{}

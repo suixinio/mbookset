@@ -29,11 +29,10 @@ func (c *ExploreController) Index() {
 	c.TplName = "explore/index.html"
 	pageIndex, _ := c.GetInt("page", 1)
 	pageSize := 24
-	books, totalCount, err := new(models.Book).HomeData(pageIndex, pageSize, cid)
+	books, totalCount, err := new(models.Book).HomeData(pageIndex, pageSize,models.BookOrder("latest"), cid)
 	if err != nil {
 		beego.Error(err)
 		c.Abort("404")
-
 	}
 	if totalCount > 0 {
 		urlSuffix := ""
