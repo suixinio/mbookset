@@ -68,5 +68,6 @@ func init() {
 	beego.Router("/blogs", &controllers.BlogController{}, "*:List")
 	//beego.Router("/blog-attach/:id:int/:attach_id:int", &controllers.BlogController{},"get:Download")
 	beego.Router("/blog-:id([0-9]+).html", &controllers.BlogController{}, "*:Index")
+	beego.Router("/crawl", &controllers.BaseController{}, "post:Crawl") //爬取
 
 }

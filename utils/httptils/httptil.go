@@ -1,4 +1,4 @@
-package commonutils
+package httptils
 
 import (
 	"crypto/tls"
