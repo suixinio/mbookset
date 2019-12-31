@@ -294,6 +294,15 @@ func (m *Book) Select(field string, value interface{}, cols ...string) (book *Bo
 	return m, err
 }
 
+func (m *Book) Find(id int, cols ...string) (book *Book, err error) {
+	if id <= 0 {
+		return
+	}
+	o := orm.NewOrm()
+	err = o.QueryTable(m.TableName()).Filter("book_id", id).One(m, cols...)
+	return m, err
+}
+
 func (m *Book) SelectPage(pageIndex, pageSize, memberId int, PrivatelyOwned int) (books []*BookData, totalCount int, err error) {
 	o := orm.NewOrm()
 	sql1 := "select count(b.book_id) as total_count from " + TNBook() + " as b left join " +

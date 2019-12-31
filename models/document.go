@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"mbook/utils"
 	"strings"
 	"time"
-	"mbook/utils"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
@@ -168,6 +169,117 @@ func (m *Document) GetMenuTop(bookId int) (docs []*Document, err error) {
 	fmt.Println("---------------end")
 	for _, doc := range docsAll {
 		docs = append(docs, doc)
+	}
+	return
+}
+
+//自动生成下一级的内容
+func (m *Document) BookStackAuto(bookId, docId int) (md, cont string) {
+	//自动生成文档内容
+	var docs []Document
+	orm.NewOrm().QueryTable("md_documents").Filter("book_id", bookId).Filter("parent_id", docId).OrderBy("order_sort").All(&docs, "document_id", "document_name", "identify")
+	var newCont []string //新HTML内容
+	var newMd []string   //新markdown内容
+	for _, doc := range docs {
+		newMd = append(newMd, fmt.Sprintf(`- [%v]($%v)`, doc.DocumentName, doc.Identify))
+		newCont = append(newCont, fmt.Sprintf(`<li><a href="$%v">%v</a></li>`, doc.Identify, doc.DocumentName))
+	}
+	md = strings.Join(newMd, "\n")
+	cont = "<ul>" + strings.Join(newCont, "") + "</ul>"
+	return
+}
+
+//爬虫批量采集
+//@param		html				html
+//@param		md					markdown内容
+//@return		content,markdown	把链接替换为标识后的内容
+func (m *Document) BookStackCrawl(html, md string, bookId, uid int) (content, markdown string, err error) {
+	var gq *goquery.Document
+	content = html
+	markdown = md
+	project := ""
+	if book, err := NewBook().Find(bookId); err == nil {
+		project = book.Identify
+	}
+	//执行采集
+	if gq, err = goquery.NewDocumentFromReader(strings.NewReader(content)); err == nil {
+		//采集模式mode
+		CrawlByChrome := false
+		if strings.ToLower(gq.Find("mode").Text()) == "chrome" {
+			CrawlByChrome = true
+		}
+		//内容选择器selector
+		selector := ""
+		//if selector = strings.TrimSpace(gq.Find("selector").Text()); selector == "" {
+		//	err = errors.New("内容选择器不能为空")
+		//	return
+		//}
+
+		// 截屏选择器
+		if screenshot := strings.TrimSpace(gq.Find("screenshot").Text()); screenshot != "" {
+			utils.ScreenShotProjects.Store(project, screenshot)
+			defer utils.DeleteScreenShot(project)
+		}
+
+		//排除的选择器
+		var exclude []string
+		if excludeStr := strings.TrimSpace(gq.Find("exclude").Text()); excludeStr != "" {
+			slice := strings.Split(excludeStr, ",")
+			for _, item := range slice {
+				exclude = append(exclude, strings.TrimSpace(item))
+			}
+		}
+
+		var links = make(map[string]string) //map[url]identify
+
+		gq.Find("a").Each(func(i int, selection *goquery.Selection) {
+			if href, ok := selection.Attr("href"); ok {
+				if !strings.HasPrefix(href, "$") {
+					hrefTrim := strings.TrimRight(href, "/")
+					identify := utils.MD5Sub16(hrefTrim) + ".md"
+					links[hrefTrim] = identify
+					links[href] = identify
+				}
+			}
+		})
+
+		gq.Find("a").Each(func(i int, selection *goquery.Selection) {
+			if href, ok := selection.Attr("href"); ok {
+				hrefLower := strings.ToLower(href)
+				//以http或者https开头
+				if strings.HasPrefix(hrefLower, "http://") || strings.HasPrefix(hrefLower, "https://") {
+					//采集文章内容成功，创建文档，填充内容，替换链接为标识
+					if retMD, err := utils.CrawlHtml2Markdown(href, 0, CrawlByChrome, 2, selector, exclude, links, map[string]string{"project": project}); err == nil {
+						var doc Document
+						identify := utils.MD5Sub16(strings.TrimRight(href, "/")) + ".md"
+						doc.Identify = identify
+						doc.BookId = bookId
+						doc.Version = time.Now().Unix()
+						doc.ModifyAt = int(time.Now().Unix())
+						doc.DocumentName = selection.Text()
+						doc.MemberId = uid
+
+						if docId, err := doc.InsertOrUpdate(); err != nil {
+							beego.Error("InsertOrUpdate => ", err)
+						} else {
+							var ds DocumentStore
+							ds.DocumentId = int(docId)
+							ds.Markdown = "[TOC]\n\r\n\r" + retMD
+							if err := ds.InsertOrUpdate("markdown", "content"); err != nil {
+								beego.Error(err)
+							}
+						}
+						selection = selection.SetAttr("href", "$"+identify)
+						if _, ok := links[href]; ok {
+							markdown = strings.Replace(markdown, "("+href+")", "($"+identify+")", -1)
+						}
+					} else {
+						beego.Error(err.Error())
+					}
+				}
+			}
+		})
+		content, _ = gq.Find("body").Html()
 	}
 	return
 }

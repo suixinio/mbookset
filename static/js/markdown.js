@@ -159,11 +159,11 @@ $(function () {
            var cm = window.editor.cm;
            var selection = cm.getSelection();
            if (selection === "") {
-               cm.replaceSelection("<mbook-summary></mbook-summary>" + selection);
+               cm.replaceSelection("<mybook-summary></mybook-summary>" + selection);
            }else {
                var selectionText = selection.split("\n");
                for (var i = 0, len = selectionText.length; i < len; i++) {
-                   selectionText[i] = (selectionText[i] === "") ? "" : "<mbook-summary></mbook-summary>" + selectionText[i];
+                   selectionText[i] = (selectionText[i] === "") ? "" : "<mybook-summary></mybook-summary>" + selectionText[i];
                }
                cm.replaceSelection(selectionText.join("\n"));
            }
@@ -171,11 +171,11 @@ $(function () {
            var cm = window.editor.cm;
            var selection = cm.getSelection();
            if (selection === "") {
-               cm.replaceSelection("<mbook-auto></mbook-auto>" + selection);
+               cm.replaceSelection("<mybook-auto></mybook-auto>" + selection);
            }else {
                var selectionText = selection.split("\n");
                for (var i = 0, len = selectionText.length; i < len; i++) {
-                   selectionText[i] = (selectionText[i] === "") ? "" : "<mbook-auto></mbook-auto>" + selectionText[i];
+                   selectionText[i] = (selectionText[i] === "") ? "" : "<mybook-auto></mybook-auto>" + selectionText[i];
                }
                cm.replaceSelection(selectionText.join("\n"));
            }

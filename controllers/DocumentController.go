@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"mbook/common"
 	"mbook/models"
+	"mbook/utils/html2md"
 	"mbook/utils/store"
 	"net/http"
 	"os"
@@ -601,9 +602,55 @@ func (c *DocumentController) Content() {
 	if doc.Version != version && !strings.EqualFold(isCover, "yes") {
 		c.JsonResult(1, "文档将被覆盖")
 	}
-
 	isSummary := false
 	isAuto := false
+
+	//替换文档中的url链接
+	if strings.ToLower(doc.Identify) == "summary.md" && (strings.Contains(markdown, "<mybook-summary></mybook-summary>") || strings.Contains(doc.Markdown, "<mybook-summary/>")) {
+		//如果标识是summary.md，并且带有bookstack的标签，则表示更新目录
+		isSummary = true
+		//要清除，避免每次保存的时候都要重新排序
+		replaces := []string{"<mybook-summary></mybook-summary>", "<mybook-summary/>"}
+		for _, r := range replaces {
+			markdown = strings.Replace(markdown, r, "", -1)
+		}
+	}
+	//爬虫采集
+	access := c.Member.IsAdministrator()
+	//if op, err := new(models.Option).FindByKey("SPIDER"); err == nil {
+	//	access = access && op.OptionValue == "true"
+	//}
+	if access && strings.ToLower(doc.Identify) == "summary.md" && (strings.Contains(markdown, "<spider></spider>") || strings.Contains(doc.Markdown, "<spider/>")) {
+		//如果标识是summary.md，并且带有bookstack的标签，则表示更新目录
+		isSummary = true
+		//要清除，避免每次保存的时候都要重新排序
+		replaces := []string{"<spider></spider>", "<spider/>"}
+		for _, r := range replaces {
+			markdown = strings.Replace(markdown, r, "", -1)
+		}
+		content, markdown, _ = new(models.Document).BookStackCrawl(content, markdown, bookId, c.Member.MemberId)
+	}
+
+	if strings.Contains(markdown, "<mybook-auto></mybook-auto>") || strings.Contains(doc.Markdown, "<mybook-auto/>") {
+		//自动生成文档内容
+
+		var imd, icont string
+		newDoc := models.NewDocument()
+		if strings.ToLower(doc.Identify) == "summary.md" {
+			icont, _ = newDoc.CreateDocumentTreeForHtml(doc.BookId, doc.DocumentId)
+			imd = html2md.Convert(icont)
+			imd = strings.Replace(imd, "(/read/"+identify+"/", "($", -1)
+		} else {
+			imd, icont = newDoc.BookStackAuto(bookId, docId)
+		}
+
+		markdown = strings.Replace(markdown, "<mybook-auto></mybook-auto>", imd, -1)
+		content = strings.Replace(content, "<mybook-auto></mybook-auto>", icont, -1)
+		isAuto = true
+	}
+	content = c.replaceLinks(identify, content, isSummary)
+
+
 
 	if markdown == "" && content != "" {
 		documentStore.Markdown = content
@@ -631,6 +678,8 @@ func (c *DocumentController) Content() {
 	doc.Release = ""
 	c.JsonResult(0, errMsg, doc)
 }
+
+
 
 //阅读页内搜索
 func (c *DocumentController) Search() {
