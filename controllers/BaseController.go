@@ -3,14 +3,13 @@ package controllers
 import (
 	"compress/gzip"
 	"encoding/json"
+	"github.com/astaxie/beego"
 	"io"
 	"mbook/common"
 	"mbook/models"
 	"mbook/utils"
 	"strings"
 	"time"
-
-	"github.com/astaxie/beego"
 )
 
 type BaseController struct {
@@ -126,4 +125,33 @@ func (c *BaseController) SetFollow() {
 		c.JsonResult(0, "已成功取消关注")
 	}
 	c.JsonResult(0, "已成功关注")
+}
+
+//内容采集
+func (this *BaseController) Crawl() {
+	if this.Member.MemberId > 0 {
+		if val, ok := this.GetSession("crawl").(string); ok && val == "1" {
+			this.JsonResult(1, "您提交的上一次采集未完成，请稍后再提交新的内容采集")
+		}
+		this.SetSession("crawl", "1")
+		defer this.DelSession("crawl")
+		urlStr := this.GetString("url")
+		force, _ := this.GetBool("force")              //是否是强力采集，强力采集，使用Chrome
+		intelligence, _ := this.GetInt("intelligence") //是否是强力采集，强力采集，使用Chrome
+		contType, _ := this.GetInt("type")
+		diySel := this.GetString("diy")
+		bookId := this.GetString("bookId")
+
+		book, err := models.NewBook().Select("book_id", bookId)
+		// todo 判断一下是否有权限操作
+		headers := map[string]string{}
+		headers["project"] = book.Identify
+
+		content, err := utils.CrawlHtml2Markdown(urlStr, contType, force, intelligence, diySel, []string{}, nil, headers)
+		if err != nil {
+			this.JsonResult(1, "采集失败："+err.Error())
+		}
+		this.JsonResult(0, "采集成功", content)
+	}
+	this.JsonResult(1, "请先登录再操作")
 }
