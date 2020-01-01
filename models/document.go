@@ -210,10 +210,10 @@ func (m *Document) BookStackCrawl(html, md string, bookId, uid int) (content, ma
 		}
 		//内容选择器selector
 		selector := ""
-		//if selector = strings.TrimSpace(gq.Find("selector").Text()); selector == "" {
-		//	err = errors.New("内容选择器不能为空")
-		//	return
-		//}
+		if selector = strings.TrimSpace(gq.Find("selector").Text()); selector == "" {
+			err = errors.New("内容选择器不能为空")
+			return
+		}
 
 		// 截屏选择器
 		if screenshot := strings.TrimSpace(gq.Find("screenshot").Text()); screenshot != "" {
