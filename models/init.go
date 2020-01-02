@@ -21,6 +21,7 @@ func init() {
 		new(Comments),
 		new(Score),
 		new(Blog),
+		new(Seo),
 	)
 }
 
@@ -79,6 +80,9 @@ func TNBlogs() string {
 	return "md_blogs"
 }
 
+func TNSEO() string{
+	return "md_seo"
+}
 
 /*
 * Tool Funcs
