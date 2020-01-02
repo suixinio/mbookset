@@ -92,6 +92,13 @@ func (c *DocumentController) Index() {
 
 	c.Data["Comments"], _ = new(models.Comments).BookComments(1, 30, bookResult.BookId)
 	c.Data["MyScore"] = new(models.Score).BookScoreByUid(c.Member.MemberId, bookResult.BookId)
+
+	c.GetSeoByPage("book_info", map[string]string{
+		"title": "《" + bookResult.BookName + "》",
+		//"keywords":    bookResult.Label,
+		"keywords":    bookResult.BookName,
+		"description": bookResult.Description,
+	})
 }
 
 //阅读器页面
@@ -200,6 +207,19 @@ func (c *DocumentController) Read() {
 	c.Data["Content"] = template.HTML(doc.Release)
 	c.Data["View"] = doc.Vcnt
 	c.Data["UpdatedAt"] = doc.ModifyTime.Format("2006-01-02 15:04:05")
+	seo := map[string]string{
+		"title":       doc.DocumentName + " - 《" + bookData.BookName + "》",
+		"keywords":    doc.DocumentName,
+		//"description": beego.Substr(bodyText+" "+bookData.Description, 0, 200),
+		"description": beego.Substr(bookData.Description, 0, 200),
+	}
+
+	//if len(parentTitle) > 0 {
+	//	seo["title"] = parentTitle + " - " + doc.DocumentName + " - 《" + bookResult.BookName + "》"
+	//}
+
+	//SEO
+	c.GetSeoByPage("book_read", seo)
 
 	//设置模版
 	//fmt.Println(doc.DocumentName)
@@ -650,8 +670,6 @@ func (c *DocumentController) Content() {
 	}
 	content = c.replaceLinks(identify, content, isSummary)
 
-
-
 	if markdown == "" && content != "" {
 		documentStore.Markdown = content
 	} else {
@@ -678,8 +696,6 @@ func (c *DocumentController) Content() {
 	doc.Release = ""
 	c.JsonResult(0, errMsg, doc)
 }
-
-
 
 //阅读页内搜索
 func (c *DocumentController) Search() {

@@ -3,6 +3,7 @@ package controllers
 import (
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
@@ -21,6 +22,7 @@ type BaseController struct {
 	Member          *models.Member    //用户
 	Option          map[string]string //全局设置
 	EnableAnonymous bool              //开启匿名访问
+	Sitename        string
 }
 type CookieRemember struct {
 	MemberId int
@@ -54,7 +56,8 @@ func (c *BaseController) Prepare() {
 	}
 	c.Data["Member"] = c.Member
 	c.Data["BaseUrl"] = c.BaseUrl()
-	c.Data["SITE_NAME"] = "BookSet"
+	c.Sitename = "BookSet"
+	c.Data["SITE_NAME"] = c.Sitename
 	//设置全局配置
 	c.Option = make(map[string]string)
 	c.Option["ENABLED_CAPTCHA"] = "false"
@@ -337,4 +340,24 @@ func (this *BaseController) replaceLinks(bookIdentify string, docHtml string, is
 	}
 
 	return docHtml
+}
+
+//根据页面获取seo
+//@param			page			页面标识
+//@param			defSeo			默认的seo的map，必须有title、keywords和description字段
+func (this *BaseController) GetSeoByPage(page string, defSeo map[string]string) {
+	var seo models.Seo
+
+	orm.NewOrm().QueryTable(models.TableSeo).Filter("Page", page).One(&seo)
+	defSeo["sitename"] = this.Sitename
+	if seo.Id > 0 {
+		for k, v := range defSeo {
+			seo.Title = strings.Replace(seo.Title, fmt.Sprintf("{%v}", k), v, -1)
+			seo.Keywords = strings.Replace(seo.Keywords, fmt.Sprintf("{%v}", k), v, -1)
+			seo.Description = strings.Replace(seo.Description, fmt.Sprintf("{%v}", k), v, -1)
+		}
+	}
+	this.Data["SeoTitle"] = seo.Title
+	this.Data["SeoKeywords"] = seo.Keywords
+	this.Data["SeoDescription"] = seo.Description
 }
