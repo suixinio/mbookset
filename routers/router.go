@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/astaxie/beego"
 	"mbook/controllers"
+	"mbook/controllers/so"
 )
 
 func init() {
@@ -70,4 +71,11 @@ func init() {
 	beego.Router("/blog-:id([0-9]+).html", &controllers.BlogController{}, "*:Index")
 	beego.Router("/crawl", &controllers.BaseController{}, "post:Crawl") //爬取
 
+	// stackoverflow 汉化
+	beego.Router("/zh-so", &so.IndexController{}, "get:Index")
+	beego.Router("/questions/:questionID", &so.QuestionController{}, "get:ShowQuestionAction")
+	beego.Router("/tags/*", &so.TagController{}, "get:ShowTagAction")
+	beego.Router("/so/questions", &so.SOController{}, "get:SpiderOSQuestions")
+	beego.Router("/so/answers", &so.SOController{}, "get:SpiderOSAnswers")
+	beego.Router("/so/translate", &so.SOController{}, "get:GoogleTranslate")
 }

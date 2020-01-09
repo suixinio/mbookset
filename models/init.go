@@ -2,8 +2,8 @@ package models
 
 import (
 	"fmt"
-
 	"github.com/astaxie/beego/orm"
+	_ "mbook/models/so"
 )
 
 func init() {
@@ -22,6 +22,10 @@ func init() {
 		new(Score),
 		new(Blog),
 		new(Seo),
+		//new(models.Answer),
+		//new(models.Correlation),
+		//new(models.Question),
+		//new(models.Tag),
 	)
 }
 
@@ -80,8 +84,26 @@ func TNBlogs() string {
 	return "md_blogs"
 }
 
-func TNSEO() string{
+func TNSEO() string {
 	return "md_seo"
+}
+
+// SO项目
+
+func TNAnswer() string {
+	return "so_answers"
+}
+
+func TNQuestion() string {
+	return "so_questions"
+}
+
+func TNTag() string {
+	return "so_tags"
+}
+
+func TNCorrelation() string {
+	return "so_correlations"
 }
 
 /*
