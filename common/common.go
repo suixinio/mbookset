@@ -18,6 +18,22 @@ const RollPage = 4
 
 const WorkingDirectory = "./"
 
+
+
+// Slogan
+const Slogan = "专注编程问答汉化"
+
+// Meta keywords
+const MetaKeywords = "程序员,编程,代码,问答"
+const Version = "1.0.0"
+const UserAgent = "Mozilla/5.0 (compatible; RP/" + Version + "; +https://www.bookset.io)"
+
+const (
+	WindowSize = 20
+	OSPageSize   = 50
+)
+
+
 // 用户权限
 const (
 	// 超级管理员.

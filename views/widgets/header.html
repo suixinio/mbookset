@@ -43,6 +43,9 @@
                     <li {{if eq .ControllerName "BlogController"}}{{if eq  .ActionName "List" "Index"}}class="active"{{end}}{{end}}>
                         <a href="{{urlfor "BlogController.List" }}" title="文章"><i class="fa fa-th-list"></i> 文章</a>
                     </li>
+                    <li {{if eq .ControllerName "IndexController" "QuestionController" "TagController"}}class="active"{{end}}>
+                        <a href="{{urlfor "IndexController.Index" }}" title="汉化SO"><i class="fa fa-th-list"></i> 汉化SO</a>
+                    </li>
                     {{if .IsSearch}}
                         <li class="active">
                             <a href="{{urlfor "SearchController.Search" }}" title="搜索"><i class="fa fa-search"></i> 搜索</a>

@@ -4,6 +4,7 @@ import (
 	"github.com/astaxie/beego"
 	"mbook/models"
 	"mbook/utils"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -50,5 +51,9 @@ func registerFuncionts() {
 	beego.AddFuncMap("isubstr", utils.Substr)
 	beego.AddFuncMap("date_format", func(t time.Time, format string) string {
 		return t.Local().Format(format)
+	})
+	beego.AddFuncMap("encodeURIComponent", func(str string) string {
+		r := url.QueryEscape(str)
+		return r
 	})
 }

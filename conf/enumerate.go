@@ -21,6 +21,11 @@ const RegexpAccount = `^[a-zA-z0-9_]{2,50}$`
 // PageSize 默认分页条数.
 const PageSize = 10
 
+const (
+	WindowSize = 20
+	OSPageSize   = 50
+)
+
 const RollPage = 4
 
 // 用户权限
