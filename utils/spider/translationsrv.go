@@ -18,6 +18,7 @@ package spider
 
 import (
 	"context"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"net/http"
 	"strings"
@@ -36,13 +37,16 @@ type translationService struct {
 
 func (srv *translationService) Translate(text string, format string) string {
 
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:1080", nil, proxy.Direct)
-	if err != nil {
-		logs.Error("can't connect to the proxy: " + err.Error())
-	}
+	if is_proxy, err := beego.AppConfig.Bool("is_proxy"); nil != err && is_proxy {
+		dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:1080", nil, proxy.Direct)
+		if err != nil {
+			logs.Error("can't connect to the proxy: " + err.Error())
+		}
 
-	httpTransport := &http.Transport{Dial: dialer.Dial}
-	http.DefaultClient.Transport = httpTransport
+		httpTransport := &http.Transport{Dial: dialer.Dial}
+		http.DefaultClient.Transport = httpTransport
+
+	}
 
 	ctx := context.Background()
 	client, err := translate.NewClient(ctx)
