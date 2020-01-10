@@ -18,15 +18,18 @@ package spider
 
 import (
 	"context"
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"net/http"
 	"strings"
 
-	"cloud.google.com/go/translate"
+	//"cloud.google.com/go/translate"
+	translate "cloud.google.com/go/translate/apiv3"
+	translatepb "google.golang.org/genproto/googleapis/cloud/translate/v3"
+
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/proxy"
-	"golang.org/x/text/language"
 )
 
 // Translation service.
@@ -37,19 +40,22 @@ type translationService struct {
 
 func (srv *translationService) Translate(text string, format string) string {
 
-	if is_proxy, err := beego.AppConfig.Bool("is_proxy"); nil != err && is_proxy {
-		dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:1080", nil, proxy.Direct)
-		if err != nil {
-			logs.Error("can't connect to the proxy: " + err.Error())
-		}
-
-		httpTransport := &http.Transport{Dial: dialer.Dial}
-		http.DefaultClient.Transport = httpTransport
-
+	//if is_proxy, err := beego.AppConfig.Bool("is_proxy"); nil != err && is_proxy {
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:1080", nil, proxy.Direct)
+	if err != nil {
+		logs.Error("can't connect to the proxy: " + err.Error())
 	}
 
+	httpTransport := &http.Transport{Dial: dialer.Dial}
+	http.DefaultClient.Transport = httpTransport
+
+	//}
+
+	//ctx := context.Background()
 	ctx := context.Background()
-	client, err := translate.NewClient(ctx)
+
+	//client, err := translate.NewClient(ctx)
+	client, err := translate.NewTranslationClient(ctx)
 	if err != nil {
 		logs.Error("create translate client failed: " + err.Error() + "123123123")
 
@@ -58,10 +64,34 @@ func (srv *translationService) Translate(text string, format string) string {
 
 	ret := ""
 
-	translations, err := client.Translate(ctx, []string{text}, language.Chinese,
-		&translate.Options{Source: language.English, Format: translate.Format(format), Model: "nmt"})
+	//translations, err := client.Translate(ctx, []string{text}, language.Chinese,
+	//	&translate.Options{Source: language.English, Format: translate.Format(format), Model: "nmt"})
+	//
+	modelID := beego.AppConfig.DefaultString("modelID", "general/nmt")
+	projectID := beego.AppConfig.DefaultString("projectID", "")
+	location := beego.AppConfig.DefaultString("location", "global")
+
+	req := &translatepb.TranslateTextRequest{
+		Parent:             fmt.Sprintf("projects/%s/locations/global", projectID),
+		SourceLanguageCode: "en",
+		TargetLanguageCode: "zh",
+		MimeType:           "text/html", // Mime types: "text/plain", "text/html"
+		Contents:           []string{text},
+		Model: fmt.Sprintf("projects/%s/locations/%s/models/%s", projectID, location, modelID),
+
+	}
+
+	translations, err := client.TranslateText(ctx, req)
+
 	if nil == err {
-		ret = translations[0].Text
+		translation := translations.GetTranslations()[0]
+		ret = translation.GetTranslatedText()
+		//for _, translation := range translations.GetTranslations() {
+		//	fmt.Fprintf(w, "Translated text: %v\n", translation.GetTranslatedText())
+		//}
+		//ret = translations[0].Text
+		//ret = resp.GetTranslations
+		//ret = resp
 	}
 
 	if "" == ret {
@@ -111,16 +141,34 @@ func (srv *translationService) Translate(text string, format string) string {
 	return ret
 }
 
-func translateFragment(client *translate.Client, ctx context.Context, fragment string) string {
-	translations, err := client.Translate(ctx, []string{fragment}, language.Chinese,
-		&translate.Options{Source: language.English, Format: translate.HTML, Model: "nmt"})
+func translateFragment(client *translate.TranslationClient, ctx context.Context, fragment string) string {
+	//translations, err := client.Translate(ctx, []string{fragment}, language.Chinese,
+	modelID := beego.AppConfig.DefaultString("modelID", "general/nmt")
+	projectID := beego.AppConfig.DefaultString("projectID", "")
+	location := beego.AppConfig.DefaultString("location", "global")
+
+	req := &translatepb.TranslateTextRequest{
+		Parent:             fmt.Sprintf("projects/%s/locations/global", projectID),
+		SourceLanguageCode: "en",
+		TargetLanguageCode: "zh",
+		MimeType:           "text/html", // Mime types: "text/plain", "text/html"
+		Contents:           []string{fragment},
+		Model: fmt.Sprintf("projects/%s/locations/%s/models/%s", projectID, location, modelID),
+
+	}
+
+	translations, err := client.TranslateText(ctx, req)
+
+	//translations, err := client.Translate(ctx, []string{fragment}, language.Chinese,
+	//	&translate.Options{Source: language.English, Format: translate.HTML, Model: "nmt"})
+
 	if nil != err {
 		logs.Error("translate failed: " + err.Error())
 		return ""
 		//return fragment
 	}
 
-	translated := translations[0].Text
+	translated := translations.GetTranslations()[0].GetTranslatedText()
 	if "" != translated {
 		return translated
 	}
