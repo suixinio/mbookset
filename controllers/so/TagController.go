@@ -21,7 +21,7 @@ func (c *TagController) ShowTagAction() {
 	tagModel := models.NewTag().GetTagByTitle(tag)
 	if nil == tagModel {
 		// 如果没有找到
-		return
+		c.Abort("404")
 	}
 	qModels, pagination := models.NewQuestion().GetTagTranslatedQuestions(tagModel.ID, page)
 	questions := questionsVos(qModels)

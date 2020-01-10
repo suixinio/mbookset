@@ -23,7 +23,7 @@ const PageSize = 10
 
 const (
 	WindowSize = 20
-	OSPageSize   = 50
+	SOPageSize   = 50
 )
 
 const RollPage = 4

@@ -114,7 +114,7 @@
                           onmouseenter="$(this).attr('aria-label', '复制')"
                           aria-label="复制"><svg class="icon-link"><use xlink:href="#iconLink"></use></svg></span>
                     <input type="text"
-                           value="{{.Conf.Server}}/questions/{{.Question.Path}}"/>
+                           value="https://www.bookset.io/questions/{{.Question.Path}}"/>
                 </div>
             </div>
         </div>
@@ -179,7 +179,7 @@
     // share
     const qr = new QRious({
       element: $('#qrCode')[0],
-      value: '{{.Conf.Server}}/questions/{{.Question.Path}}',
+      value: 'https://www.bookset.io/questions/{{.Question.Path}}',
       size: 90,
     })
     $('#qrCode').css('background-image', `url(${qr.toDataURL('image/jpeg')})`).hide()
@@ -197,7 +197,7 @@
         return false
       }
 
-      const shareURL = encodeURIComponent('{{.Conf.Server}}/questions/{{.Question.Path}}')
+      const shareURL = encodeURIComponent('https://www.bookset.io/questions/{{.Question.Path}}')
       const title = encodeURIComponent('{{.Question.Title}} - BookSet')
       const avatarURL = '{{.Conf.StaticServer}}/images/logo@128.png'
       const urls = {

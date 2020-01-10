@@ -73,11 +73,11 @@ func NewQuestion() *Question {
 }
 
 func (srv *Question) GetQuestions(page int) (ret []*Question, pagination *utils.Pagination) {
-	offset := (page - 1) * conf.OSPageSize
+	offset := (page - 1) * conf.SOPageSize
 	o := orm.NewOrm()
 
 	sqlFmt := "select id ,source_id,created_at , title_zh_cn,tags,path FROM " + TNQuestion() + " where title_zh_cn !='' and content_zh_cn !='' ORDER BY updated_at,votes ASC LIMIT %v OFFSET %v"
-	sql := fmt.Sprintf(sqlFmt, conf.OSPageSize, offset)
+	sql := fmt.Sprintf(sqlFmt, conf.SOPageSize, offset)
 	o.Raw(sql).QueryRows(&ret);
 
 
@@ -96,11 +96,18 @@ func (srv *Question) GetQuestions(page int) (ret []*Question, pagination *utils.
 }
 
 func (srv *Question) GetQuestionByQuestionID(qa_id string) (ret *Question) {
+
 	o := orm.NewOrm()
-	query := o.QueryTable(TNQuestion())
+	sql := "select * from " + TNQuestion() + " where (title_zh_cn !='' and content_zh_cn != '' and source_id = %s) "
+	sqlfmt := fmt.Sprintf(sql, qa_id)
 	var qa Question
-	_ = query.Filter("SourceID", qa_id).One(&qa)
+	o.Raw(sqlfmt).QueryRow(&qa)
 	ret = &qa
+	//query := o.QueryTable(TNQuestion())
+	//
+	//var qa Question
+	//_ = query.Filter("SourceID", qa_id).One(&qa)
+	//ret = &qa
 	return
 }
 
@@ -108,7 +115,7 @@ func (src *Question) GetTagTranslatedQuestions(tagID uint64, page int) (ret []*Q
 	//var rels []*Correlation
 	o := orm.NewOrm()
 
-	offset := (page - 1) * conf.PageSize
+	offset := (page - 1) * conf.SOPageSize
 	sql := "select %s from " + TNQuestion() + " where (title_zh_cn !='' and content_zh_cn != '') and id in (select id1 from " + TNCorrelation() + " where id2=%v and type=%v)"
 	sqlCount := fmt.Sprintf(sql, "count(id) cnt", tagID, CorrelationQuestionTag)
 	var params []orm.Params
@@ -119,7 +126,7 @@ func (src *Question) GetTagTranslatedQuestions(tagID uint64, page int) (ret []*Q
 		}
 	}
 	sql = "select %s from " + TNQuestion() + " where (title_zh_cn !='' and content_zh_cn != '') and id in (select id1 from " + TNCorrelation() + " where id2=%v and type=%v) ORDER BY created_at desc limit %v OFFSET %v"
-	sqlFmt := fmt.Sprintf(sql, "*", tagID, CorrelationQuestionTag, conf.PageSize, offset)
+	sqlFmt := fmt.Sprintf(sql, "*", tagID, CorrelationQuestionTag, conf.SOPageSize, offset)
 	o.Raw(sqlFmt).QueryRows(&ret)
 
 	//sqlCount := fmt.Sprintf(sqlFmt, "count(book_id) cnt")
