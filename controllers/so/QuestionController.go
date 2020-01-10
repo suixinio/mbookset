@@ -1,6 +1,5 @@
 package so
 
-import "C"
 import (
 	"mbook/controllers"
 	models "mbook/models/so"

@@ -5,10 +5,7 @@ import (
 	"mbook/controllers"
 	models "mbook/models/so"
 	"mbook/utils/spider"
-	//"so-translate/spider"
-
-	//"so-translate/models"
-	//"so-translate/spider"
+	"time"
 )
 
 type SOController struct {
@@ -20,13 +17,14 @@ var importing = false
 func (c *SOController) SpiderOSQuestions() {
 	// 获取爬取的页数
 	page, _ := c.GetInt("p", 1)
+	startPage, _ := c.GetInt("s", 1)
 	if importing {
-		return
+		c.JsonResult(0, "error")
 	}
 	importing = true
 	go func() {
 		defer func() { importing = false }()
-		for i := 1; i <= page; {
+		for i := startPage; i <= page; {
 			qnas := spider.StackOverflow.ParseQuestionsByVotes(i, 100)
 			if nil == qnas {
 				continue
@@ -42,6 +40,7 @@ func (c *SOController) SpiderOSQuestions() {
 func (c *SOController) SpiderOSAnswers() {
 	// 获取需要爬取的问题qu的数量
 	size, _ := c.GetInt("s", 1)
+	loopCount, _ := c.GetInt("l", 1)
 	q_id := c.GetString("q", "")
 	if "" != q_id {
 		// 针对特定问题爬取
@@ -54,13 +53,15 @@ func (c *SOController) SpiderOSAnswers() {
 	} else {
 		// 批量爬取
 		go func() {
-			//Get all the unanswered questions
-			qs := models.NewQuestion().GetUnansweredQuestions(size)
-			qnas := spider.StackOverflow.ParseQuestionsAndAnswers(qs)
-			for _, qna := range qnas {
-				for _, answer := range qna.Answers {
-					answer.QuestionID = qna.Question.ID
-					answer.Insertorupdate()
+			for i := 1; i <= loopCount; i++ {
+				//Get all the unanswered questions
+				qs := models.NewQuestion().GetUnansweredQuestions(size)
+				qnas := spider.StackOverflow.ParseQuestionsAndAnswers(qs)
+				for _, qna := range qnas {
+					for _, answer := range qna.Answers {
+						answer.QuestionID = qna.Question.ID
+						answer.Insertorupdate()
+					}
 				}
 			}
 		}()
@@ -87,6 +88,7 @@ func (c *SOController) GoogleTranslate() {
 			}
 			logs.Info("translated a question [" + q.Path + "]")
 			qCnt++
+			time.Sleep(time.Second)
 		}
 
 	}
@@ -105,8 +107,8 @@ func (c *SOController) GoogleTranslate() {
 			}
 			logs.Info("translated a question [" + q.Path + "]")
 			qCnt++
+			time.Sleep(time.Second)
 		}
-
 	}
 
 	if size == 0 && (translate_flag == "qa" || translate_flag == "a") {
@@ -120,6 +122,7 @@ func (c *SOController) GoogleTranslate() {
 			}
 			logs.Info("translated an answer [%d]", an.ID)
 			aCnt++
+			time.Sleep(time.Second)
 		}
 	}
 

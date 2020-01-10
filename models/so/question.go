@@ -73,15 +73,24 @@ func NewQuestion() *Question {
 }
 
 func (srv *Question) GetQuestions(page int) (ret []*Question, pagination *utils.Pagination) {
-	offset := (page - 1) * conf.PageSize
+	offset := (page - 1) * conf.OSPageSize
 	o := orm.NewOrm()
 
-	sqlFmt := "select id ,source_id,created_at , title_zh_cn,tags,path FROM " + TNQuestion() + " where title_zh_cn !='' and content_zh_cn !='' ORDER BY updated_at,votes DESC LIMIT %v OFFSET %v"
-	sql := fmt.Sprintf(sqlFmt, conf.PageSize, offset)
+	sqlFmt := "select id ,source_id,created_at , title_zh_cn,tags,path FROM " + TNQuestion() + " where title_zh_cn !='' and content_zh_cn !='' ORDER BY updated_at,votes ASC LIMIT %v OFFSET %v"
+	sql := fmt.Sprintf(sqlFmt, conf.OSPageSize, offset)
 	o.Raw(sql).QueryRows(&ret);
-	count := len(ret)
 
-	pagination = utils.NewPagination(page, int(count))
+
+	sqlCount := "select count(id) cnt FROM " + TNQuestion() + " where title_zh_cn !='' and content_zh_cn !=''"
+	var params []orm.Params
+	totalCount := 0
+	if _, err := o.Raw(sqlCount).Values(&params); err == nil {
+		if len(params) > 0 {
+			totalCount, _ = strconv.Atoi(params[0]["cnt"].(string))
+		}
+	}
+
+	pagination = utils.NewPagination(page, int(totalCount))
 
 	return
 }
@@ -99,9 +108,9 @@ func (src *Question) GetTagTranslatedQuestions(tagID uint64, page int) (ret []*Q
 	//var rels []*Correlation
 	o := orm.NewOrm()
 
-	sql := "select %s from "+ TNQuestion()+" where (title_zh_cn !='' and content_zh_cn != '') and id in (select id1 from "+TNCorrelation()+" where id2=%v and type=%v) ORDER BY created_at desc limit %v OFFSET %v"
 	offset := (page - 1) * conf.PageSize
-	sqlCount := fmt.Sprintf(sql,"count(id) cnt",tagID,CorrelationQuestionTag,conf.PageSize,offset)
+	sql := "select %s from " + TNQuestion() + " where (title_zh_cn !='' and content_zh_cn != '') and id in (select id1 from " + TNCorrelation() + " where id2=%v and type=%v)"
+	sqlCount := fmt.Sprintf(sql, "count(id) cnt", tagID, CorrelationQuestionTag)
 	var params []orm.Params
 	totalCount := 0
 	if _, err := o.Raw(sqlCount).Values(&params); err == nil {
@@ -109,9 +118,9 @@ func (src *Question) GetTagTranslatedQuestions(tagID uint64, page int) (ret []*Q
 			totalCount, _ = strconv.Atoi(params[0]["cnt"].(string))
 		}
 	}
-	sqlFmt := fmt.Sprintf(sql,"*",tagID,CorrelationQuestionTag,conf.PageSize,offset)
+	sql = "select %s from " + TNQuestion() + " where (title_zh_cn !='' and content_zh_cn != '') and id in (select id1 from " + TNCorrelation() + " where id2=%v and type=%v) ORDER BY created_at desc limit %v OFFSET %v"
+	sqlFmt := fmt.Sprintf(sql, "*", tagID, CorrelationQuestionTag, conf.PageSize, offset)
 	o.Raw(sqlFmt).QueryRows(&ret)
-
 
 	//sqlCount := fmt.Sprintf(sqlFmt, "count(book_id) cnt")
 	//var params []orm.Params
@@ -149,18 +158,25 @@ func (src *Question) AddQuestions(qus []*Question) (err error) {
 			//qu.ID = qa.ID
 			qa.Votes = qu.Votes
 			qa.Views = qu.Views
-			_,err := o.Update(&qa)
-			if nil != err {
-				o.Rollback()
-			}
+			_, err = o.Update(&qa)
+			qu = &qa
+			//if nil != err {
+			//	logs.Error("回滚1 %s %s", err, qa)
+			//	o.Rollback()
+			//
+			//}
 		} else {
 			qu.ID = uint64(time.Now().UnixNano())
-			o.Insert(qu)
+			_, err = o.Insert(qu)
 		}
 		NewTag().tagQuestion(o, qu)
+		if nil != err {
+			logs.Error("回滚1%s %s", err, qu)
+			o.Rollback()
+		}
 		err = o.Commit()
 		if nil != err {
-			logs.Error("回滚%s %s", err, qu)
+			logs.Error("回滚2%s %s", err, qu)
 			o.Rollback()
 		}
 	}

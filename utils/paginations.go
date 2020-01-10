@@ -23,7 +23,7 @@ type Pagination struct {
 
 // NewPagination creates a new pagination with the specified current page num and record count.
 func NewPagination(currentPageNum, recordCount int) *Pagination {
-	PageSize := conf.PageSize
+	PageSize := conf.OSPageSize
 	pageCount := int(math.Ceil(float64(recordCount) / float64(PageSize)))
 
 	previousPageNum := currentPageNum - 1
