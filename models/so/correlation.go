@@ -24,6 +24,24 @@ type Correlation struct {
 	Type int    `orm:"column(type);null" json:"type"`
 }
 
+// 多字段索引
+func (u *Correlation) TableIndex() [][]string {
+	return [][]string{
+		[]string{"ID1", "ID2"},
+		[]string{"ID2", "ID1"},
+		[]string{"ID1"},
+		[]string{"ID2"},
+	}
+}
+
+// 多字段唯一键
+func (u *Correlation) TableUnique() [][]string {
+	return [][]string{
+		[]string{"ID1", "ID2"},
+	}
+}
+
+
 func (m *Correlation) TableName() string {
 	return TNCorrelation()
 }

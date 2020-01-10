@@ -74,7 +74,7 @@ func (s *stackOverflow) GetProxy() (qs string) {
 	data := map[string]interface{}{}
 	url := "http://182.92.105.252:5010/get/"
 	response, body, errs := request.Set("User-Agent", common.UserAgent).Get(url).Timeout(30*time.Second).Retry(3, 5*time.Second).EndStruct(&data)
-	if 200 != response.StatusCode {
+	if nil != response &&  200 != response.StatusCode {
 		logs.Error("get [%s] status code is [%d], response body is [%s]", url, response.StatusCode, body)
 		return
 		//return nil
