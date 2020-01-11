@@ -33,3 +33,10 @@ copyrequestbody = true
 # 使用Chrome的headless去处理。之前考虑使用phantomjs的，但是phantomjs有些小问题，不如Chrome强大。
 # chrome=chromium-browser
 chrome=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
+
+
+projectID = pro-pulsar-248509
+location = global
+sourceLang = en
+targetLang = zh
+modelID = general/nmt

@@ -81,10 +81,10 @@ func (m *Book) HomeData(pageIndex, pageSize int, orderType BookOrder, cid int, f
 	}
 	switch orderType {
 	case OrderRecommend: //推荐
-		cond = append(cond, "order_index>0")
+		//cond = append(cond, "order_index>0")
 		order = "order_index desc"
 	case OrderLatestRecommend: //最新推荐
-		cond = append(cond, "order_index>0")
+		//cond = append(cond, "order_index>0")
 		order = "book_id desc"
 	case OrderPopular: //受欢迎
 		order = "star desc,vcnt desc"
@@ -110,7 +110,7 @@ func (m *Book) HomeData(pageIndex, pageSize int, orderType BookOrder, cid int, f
 		lang = ""
 	}
 	if strings.TrimSpace(lang) != "" {
-		condStr = condStr + " and `lang` = '" + lang + "'"
+		//condStr = condStr + " and `lang` = '" + lang + "'"
 	}
 	sqlFmt := "select %v from md_books " + condStr
 	fieldStr := strings.Join(fields, ",")
