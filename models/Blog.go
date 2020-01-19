@@ -5,7 +5,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-
 	"time"
 )
 
@@ -204,6 +203,7 @@ func (b *Blog) Link() (*Blog, error) {
 
 	return b, nil
 }
+
 //
 ////判断指定的文章标识是否存在
 //func (b *Blog) IsExist(identify string) bool {
@@ -219,7 +219,7 @@ func (b *Blog) Link() (*Blog, error) {
 //	if b.OrderIndex <= 0 {
 //		blog := NewBlog()
 //		if err := o.QueryTable(blog.TableName()).OrderBy("-blog_id").Limit(1).One(blog, "blog_id"); err == nil {
-//			b.OrderIndex = blog.BlogId + 1;
+//			b.OrderIndex = blog.BlogId + 1
 //		} else {
 //			c, _ := o.QueryTable(b.TableName()).Count()
 //			b.OrderIndex = int(c) + 1
@@ -232,8 +232,8 @@ func (b *Blog) Link() (*Blog, error) {
 //	if b.BlogId > 0 {
 //		b.Modified = time.Now()
 //		_, err = o.Update(b, cols...)
-//		key := fmt.Sprintf("blog-id-%d", b.BlogId)
-//		cache.Delete(key)
+//		//key := fmt.Sprintf("blog-id-%d", b.BlogId)
+//		//cache.Delete(key)
 //
 //	} else {
 //
@@ -243,8 +243,9 @@ func (b *Blog) Link() (*Blog, error) {
 //
 //	return err
 //}
+
 //
-////过滤文章的危险标签，处理文章外链以及图片.
+//过滤文章的危险标签，处理文章外链以及图片.
 //func (b *Blog) Processor() *Blog {
 //
 //	b.BlogRelease = utils.SafetyProcessor(b.BlogRelease)
@@ -278,7 +279,7 @@ func (b *Blog) Link() (*Blog, error) {
 //
 //	return b
 //}
-//
+
 ////分页查询文章列表
 func (b *Blog) FindToPager(pageIndex, pageSize int, memberId int, status string) (blogList []*Blog, totalCount int, err error) {
 
@@ -319,6 +320,7 @@ func (b *Blog) FindToPager(pageIndex, pageSize int, memberId int, status string)
 
 	return
 }
+
 //
 ////删除文章
 //func (b *Blog) Delete(blogId int) error {
@@ -366,6 +368,7 @@ func (b *Blog) QueryPrevious(blogId int) (*Blog, error) {
 	}
 	return blog, err
 }
+
 //
 ////关联文章附件
 func (b *Blog) LinkAttach() (err error) {

@@ -14,7 +14,11 @@
                     <li>
                         <a href="{{urlfor "BookController.Index"}}" title="我的图书"><i class="fa fa-book" aria-hidden="true"></i> 我的图书</a>
                     </li>
-                {{if eq .Member.Role 0 }}
+                    <li>
+                        <a href="{{urlfor "BlogController.ManageList"}}" title="我的文章"><i class="fa fa-file" aria-hidden="true"></i> 我的文章</a>
+                    </li>
+
+                    {{if eq .Member.Role 0 }}
                     <li>
                         <a href="{{urlfor "ManagerController.Category"}}" title="管理"><i class="fa fa-university" aria-hidden="true"></i> 管理</a>
                     </li>
@@ -88,6 +92,9 @@
                         </li>
                         <li>
                             <a href="{{urlfor "BookController.Index"}}" title="我的图书"><i class="fa fa-book" aria-hidden="true"></i> 我的图书</a>
+                        </li>
+                        <li>
+                            <a href="{{urlfor "BlogController.ManageList"}}" title="我的文章"><i class="fa fa-file" aria-hidden="true"></i> 我的文章</a>
                         </li>
                         {{if eq .Member.Role 0  1}}
                         <li>

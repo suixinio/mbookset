@@ -117,3 +117,4 @@ modules.xml
 /uploads/
 /store/
 *.tar.gz
+*.log

@@ -3,11 +3,10 @@ package controllers
 import (
 	"fmt"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 	"html/template"
 	"mbook/models"
 	"strconv"
-
-	"github.com/astaxie/beego/orm"
 	//"github.com/lifei6671/mindoc/conf"
 	"mbook/utils"
 	//"net/url"
@@ -44,7 +43,7 @@ func (c *BlogController) Index() {
 	}
 
 	if c.Ctx.Input.IsPost() {
-		password := c.GetString("password");
+		password := c.GetString("password")
 		if blog.BlogStatus == "password" && password != blog.Password {
 			c.JsonResult(6001, "文章密码不正确")
 		} else if blog.BlogStatus == "password" && password == blog.Password {
@@ -114,28 +113,30 @@ func (c *BlogController) List() {
 	c.Data["Lists"] = blogList
 }
 
-////管理后台文章列表
-//func (c *BlogController) ManageList() {
-//	c.Prepare()
-//	c.TplName = "blog/manage_list.tpl"
-//
-//	pageIndex, _ := c.GetInt("page", 1)
-//
-//	blogList, totalCount, err := models.NewBlog().FindToPager(pageIndex, conf.PageSize, c.Member.MemberId, "")
-//
-//	if err != nil {
-//		c.ShowErrorPage(500, err.Error())
-//	}
-//	if totalCount > 0 {
-//		pager := pagination.NewPagination(c.Ctx.Request, totalCount, conf.PageSize, c.BaseUrl())
-//		c.Data["PageHtml"] = pager.HtmlPages()
-//	} else {
-//		c.Data["PageHtml"] = ""
-//	}
-//
-//	c.Data["ModelList"] = blogList
-//
-//}
+//管理后台文章列表
+func (c *BlogController) ManageList() {
+	c.Prepare()
+	c.TplName = "blog/manage_list.html"
+	//
+	pageIndex, _ := c.GetInt("page", 1)
+	//
+	blogList, totalCount, err := models.NewBlog().FindToPager(pageIndex, 50, c.Member.MemberId, "")
+	//
+	if err != nil {
+		c.Abort("500")
+		//c.ShowErrorPage(500, err.Error())
+	}
+	if totalCount > 0 {
+		pager := utils.NewPagination(totalCount, 50)
+		c.Data["PageHtml"] = pager
+	} else {
+		c.Data["PageHtml"] = ""
+	}
+	//
+	c.Data["ModelList"] = blogList
+
+}
+
 //
 ////文章设置
 //func (c *BlogController) ManageSetting() {
@@ -273,8 +274,8 @@ func (c *BlogController) List() {
 //		c.Data["Model"] = models.NewBlog()
 //	}
 //}
-//
-////文章创建或编辑
+
+//文章创建或编辑
 //func (c *BlogController) ManageEdit() {
 //	c.Prepare()
 //	c.TplName = "blog/manage_edit.tpl"
@@ -306,37 +307,37 @@ func (c *BlogController) List() {
 //			c.JsonResult(6005, "文章已被修改")
 //		}
 //		//如果是关联文章，需要同步关联的文档
-//		if blog.BlogType == 1 {
-//			doc, err := models.NewDocument().Find(blog.DocumentId)
-//			if err != nil {
-//				beego.Error("查询关联项目文档时出错 ->", err)
-//				c.JsonResult(6003, "查询关联项目文档时出错")
-//			}
-//			book, err := models.NewBook().Find(doc.BookId)
-//			if err != nil {
-//				c.JsonResult(6002, "项目不存在或权限不足")
-//			}
-//
-//			// 如果不是超级管理员，则校验权限
-//			if !c.Member.IsAdministrator() {
-//				bookResult, err := models.NewBookResult().FindByIdentify(book.Identify, c.Member.MemberId)
-//
-//				if err != nil || bookResult.RoleId == conf.BookObserver {
-//					beego.Error("FindByIdentify => ", err)
-//					c.JsonResult(6002, "关联文档不存在或权限不足")
-//				}
-//			}
-//
-//			doc.Markdown = blogContent
-//			doc.Release = blogHtml
-//			doc.Content = blogHtml
-//			doc.ModifyTime = time.Now()
-//			doc.ModifyAt = c.Member.MemberId
-//			if err := doc.InsertOrUpdate("markdown", "release", "content", "modify_time", "modify_at"); err != nil {
-//				beego.Error("保存关联文档时出错 ->", err)
-//				c.JsonResult(6004, "保存关联文档时出错")
-//			}
-//		}
+//		//if blog.BlogType == 1 {
+//		//	doc, err := models.NewDocument().SelectByDocId(blog.DocumentId)
+//		//	if err != nil {
+//		//		beego.Error("查询关联项目文档时出错 ->", err)
+//		//		c.JsonResult(6003, "查询关联项目文档时出错")
+//		//	}
+//		//	book, err := models.NewBook().Find(doc.BookId)
+//		//	if err != nil {
+//		//		c.JsonResult(6002, "项目不存在或权限不足")
+//		//	}
+//		//
+//		//	// 如果不是超级管理员，则校验权限
+//		//	if !c.Member.IsAdministrator() {
+//		//		bookResult, err := models.NewBookData().FindByIdentify(book.Identify, c.Member.MemberId)
+//		//
+//		//		if err != nil || bookResult.RoleId == conf.BookObserver {
+//		//			beego.Error("FindByIdentify => ", err)
+//		//			c.JsonResult(6002, "关联文档不存在或权限不足")
+//		//		}
+//		//	}
+//		//
+//		//	doc.Markdown = blogContent
+//		//	doc.Release = blogHtml
+//		//	doc.Content = blogHtml
+//		//	doc.ModifyTime = time.Now()
+//		//	doc.ModifyAt = c.Member.MemberId
+//		//	if err := doc.InsertOrUpdate("markdown", "release", "content", "modify_time", "modify_at"); err != nil {
+//		//		beego.Error("保存关联文档时出错 ->", err)
+//		//		c.JsonResult(6004, "保存关联文档时出错")
+//		//	}
+//		//}
 //
 //		blog.BlogContent = blogContent
 //		blog.BlogRelease = blogHtml
@@ -386,7 +387,7 @@ func (c *BlogController) List() {
 //	}
 //	c.Data["Model"] = blog
 //}
-//
+
 ////删除文章
 //func (c *BlogController) ManageDelete() {
 //	c.Prepare()

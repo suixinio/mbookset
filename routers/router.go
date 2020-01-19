@@ -65,6 +65,16 @@ func init() {
 	beego.Router("/manager/icon-cate", &controllers.ManagerController{}, "post:UpdateCateIcon")
 
 	//文章
+
+	//管理文章的路由
+	beego.Router("/manage/blogs", &controllers.BlogController{},"*:ManageList")
+	//beego.Router("/manage/blogs/setting/?:id", &controllers.BlogController{}, "*:ManageSetting")
+	//beego.Router("/manage/blogs/edit/?:id",&controllers.BlogController{}, "*:ManageEdit")
+	//beego.Router("/manage/blogs/delete",&controllers.BlogController{}, "post:ManageDelete")
+	//beego.Router("/manage/blogs/upload",&controllers.BlogController{}, "post:Upload")
+	//beego.Router("/manage/blogs/attach/:id",&controllers.BlogController{}, "post:RemoveAttachment")
+
+
 	//读文章的路由
 	beego.Router("/blogs", &controllers.BlogController{}, "*:List")
 	//beego.Router("/blog-attach/:id:int/:attach_id:int", &controllers.BlogController{},"get:Download")
