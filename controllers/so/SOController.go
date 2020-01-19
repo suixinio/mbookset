@@ -69,6 +69,9 @@ func (c *SOController) SpiderOSAnswers() {
 	c.JsonResult(0, "OK")
 }
 
+
+// 这个模块需要进行一次更新
+// todo 针对每天的访问进行一次更新，交给宝塔每天进行更新
 func (c *SOController) GoogleTranslate() {
 	translate_flag := c.GetString("flag", "")
 	size, _ := c.GetInt("s", 0)
@@ -90,7 +93,6 @@ func (c *SOController) GoogleTranslate() {
 			qCnt++
 			time.Sleep(time.Second)
 		}
-
 	}
 
 	if size == 0 && (translate_flag == "qa" || translate_flag == "q") {

@@ -7,6 +7,7 @@ import (
 	"mbook/models"
 	"mbook/utils"
 	"strconv"
+	"strings"
 )
 
 type ExploreController struct {
@@ -16,21 +17,49 @@ type ExploreController struct {
 func (c *ExploreController) Index() {
 	fmt.Println(c)
 	var (
+		tab       string
 		cid       int // 分类id
 		cate      models.Category
 		urlPrefix = beego.URLFor("ExploreController.Index")
 		tabName   = map[string]string{"recommend": "站长推荐", "latest": "最新发布", "popular": "热门书籍"}
 	)
-	if cid, _ = c.GetInt("cid"); cid >= 0 {
-		cateModel := new(models.Category)
-		cate = cateModel.Find(cid)
-		c.Data["Cate"] = cate
+
+	tab = strings.ToLower(c.GetString("tab"))
+	switch tab {
+	case "recommend", "popular", "latest":
+	default:
+		tab = "latest"
 	}
+
+	//if cid, _ = c.GetInt("cid"); cid >= 0 {
+	//	cateModel := new(models.Category)
+	//	cate = cateModel.Find(cid)
+	//	c.Data["Cate"] = cate
+	//}
+
+	//cates, _ := models.NewCategory.GetCates(-1, 1)
+	cates, _ := models.NewCategory().GetCates(-1, 1)
+	cid, _ = c.GetInt("cid")
+	pid := cid
+	if cid > 0 {
+		for _, item := range cates {
+			if item.Id == cid {
+				if item.Pid > 0 {
+					pid = item.Pid
+				}
+				c.Data["Cate"] = item
+				cate = item
+				break
+			}
+		}
+	}
+	c.Data["Cates"] = cates
 	c.Data["Cid"] = cid
+	c.Data["Pid"] = pid
 	c.TplName = "explore/index.html"
 	pageIndex, _ := c.GetInt("page", 1)
 	pageSize := 24
-	books, totalCount, err := new(models.Book).HomeData(pageIndex, pageSize,models.BookOrder("latest"), cid)
+	books, totalCount, err := new(models.Book).HomeData(pageIndex, pageSize, models.BookOrder("latest"), cid)
 	if err != nil {
 		beego.Error(err)
 		c.Abort("404")
@@ -50,7 +79,7 @@ func (c *ExploreController) Index() {
 
 	//this.Data["TotalPages"] = int(math.Ceil(float64(totalCount) / float64(pageSize)))
 	//this.Data["Lists"] = books
-	//this.Data["Tab"] = tab
+	c.Data["Tab"] = tab
 	//this.Data["Lang"] = lang
 	title := c.Sitename
 	if cid > 0 {

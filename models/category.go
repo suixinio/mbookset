@@ -2,9 +2,8 @@ package models
 
 import (
 	"errors"
-	"strings"
-
 	"github.com/astaxie/beego/orm"
+	"strings"
 )
 
 type Category struct {
@@ -21,6 +20,11 @@ type Category struct {
 func (m *Category) TableName() string {
 	return TNCategory()
 }
+
+func NewCategory() *Category {
+	return &Category{}
+}
+
 
 func (m *Category) GetCates(pid int, status int) (cates []Category, err error) {
 	qs := orm.NewOrm().QueryTable(TNCategory())
