@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"io"
 	"mbook/common"
+	"mbook/conf"
 	"mbook/models"
 	"mbook/utils"
 	"strconv"
@@ -360,4 +361,12 @@ func (this *BaseController) GetSeoByPage(page string, defSeo map[string]string) 
 	this.Data["SeoTitle"] = seo.Title
 	this.Data["SeoKeywords"] = seo.Keywords
 	this.Data["SeoDescription"] = seo.Description
+}
+
+func (this *BaseController) forbidGeneralRole() bool {
+	// 如果只有作者和管理员才能写作的话，那么已创建了项目的普通用户无法将项目转为公开或者是私密分享
+	if this.Member.Role == conf.MemberGeneralRole && models.GetOptionValue("ALL_CAN_WRITE_BOOK", "true") != "true" {
+		return true
+	}
+	return false
 }

@@ -40,6 +40,7 @@ func init() {
 	beego.Router("/book/:key/sort", &controllers.BookController{}, "post:SaveSort")          //目录排序
 	beego.Router("/book/:key/replace", &controllers.BookController{}, "get,post:Replace")    //全文替换
 	beego.Router("/book/setting/upload", &controllers.BookController{}, "post:UploadCover")  //图书封面
+	beego.Router("/book/setting/open", &controllers.BookController{}, "post:PrivatelyOwned")
 	beego.Router("/book/star/:id", &controllers.BookController{}, "*:Collection")            //收藏图书
 	beego.Router("/book/setting/save", &controllers.BookController{}, "post:SaveBook")       //保存
 	beego.Router("/book/:key/release", &controllers.BookController{}, "post:Release")        //发布

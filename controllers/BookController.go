@@ -833,3 +833,54 @@ func (this *BookController) Replace() {
 
 	this.JsonResult(0, "替换成功")
 }
+
+
+
+//设置项目私有状态.
+func (this *BookController) PrivatelyOwned() {
+
+	status := this.GetString("status")
+	if this.forbidGeneralRole() && status == "open" {
+		this.JsonResult(6001, "您的角色非作者和管理员，无法将项目设置为公开")
+	}
+	if status != "open" && status != "close" {
+		this.JsonResult(6003, "参数错误")
+	}
+
+	state := 0
+	if status == "open" {
+		state = 0
+	} else {
+		state = 1
+	}
+
+	bookResult, err := this.IsPermission()
+	if err != nil {
+		this.JsonResult(6001, err.Error())
+	}
+
+	//只有创始人才能变更私有状态
+	if bookResult.RoleId != conf.BookFounder {
+		this.JsonResult(6002, "权限不足")
+	}
+
+	if _, err = orm.NewOrm().QueryTable("md_books").Filter("book_id", bookResult.BookId).Update(orm.Params{
+		"privately_owned": state,
+	}); err != nil {
+		logs.Error("PrivatelyOwned => ", err)
+		this.JsonResult(6004, "保存失败")
+	}
+	go func() {
+		models.CountCategory()
+
+		//public := true
+		//if state == 1 {
+		//	public = false
+		//}
+		//client := models.NewElasticSearchClient()
+		//if errSet := client.SetBookPublic(bookResult.BookId, public); errSet != nil && client.On {
+		//	beego.Error(errSet.Error())
+		//}
+	}()
+	this.JsonResult(0, "ok")
+}
