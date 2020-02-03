@@ -1,6 +1,7 @@
 package so
 
 import (
+	"fmt"
 	"github.com/astaxie/beego/logs"
 	"mbook/controllers"
 	models "mbook/models/so"
@@ -16,6 +17,10 @@ var importing = false
 
 func (c *SOController) SpiderOSQuestions() {
 	// 获取爬取的页数
+	token := c.GetString("token", "")
+	if token != "jiacheng" {
+		c.JsonResult(0, "OK")
+	}
 	page, _ := c.GetInt("p", 1)
 	startPage, _ := c.GetInt("s", 1)
 	if importing {
@@ -38,9 +43,13 @@ func (c *SOController) SpiderOSQuestions() {
 }
 
 func (c *SOController) SpiderOSAnswers() {
+	token := c.GetString("token", "")
+	if token != "jiacheng" {
+		c.JsonResult(0, "OK")
+	}
 	// 获取需要爬取的问题qu的数量
-	size, _ := c.GetInt("s", 1)
-	loopCount, _ := c.GetInt("l", 1)
+	size, _ := c.GetInt("size", 1)
+	loopCount, _ := c.GetInt("loop", 1)
 	q_id := c.GetString("q", "")
 	if "" != q_id {
 		// 针对特定问题爬取
@@ -69,14 +78,19 @@ func (c *SOController) SpiderOSAnswers() {
 	c.JsonResult(0, "OK")
 }
 
-
 // 这个模块需要进行一次更新
 // todo 针对每天的访问进行一次更新，交给宝塔每天进行更新
+// todo 拆分翻译部分为一个单独的模块进程
 func (c *SOController) GoogleTranslate() {
+	token := c.GetString("token", "")
+	if token != "jiacheng" {
+		c.JsonResult(0, "OK")
+	}
 	translate_flag := c.GetString("flag", "")
-	size, _ := c.GetInt("s", 0)
+	size, _ := c.GetInt("size", 0)
 	qCnt, aCnt := 0, 0
-
+	fmt.Println(translate_flag, size)
+	//翻译有answer的question
 	if translate_flag == "q" && size != 0 {
 		questions := models.NewQuestion().GetansweredUntranslatedQuestions(size)
 		for _, q := range questions {
@@ -95,25 +109,26 @@ func (c *SOController) GoogleTranslate() {
 		}
 	}
 
-	if size == 0 && (translate_flag == "qa" || translate_flag == "q") {
-		questions := models.NewQuestion().GetUntranslatedQuestions()
-		for _, q := range questions {
-			if "" == q.TitleZhCN {
-				q.TitleZhCN = spider.Translation.Translate(q.TitleEnUS, "text")
-			}
-			if "" == q.ContentZhCN {
-				q.ContentZhCN = spider.Translation.Translate(q.ContentEnUS, "html")
-			}
-			if err := q.Update(); nil != err {
-				logs.Error("update question failed: " + err.Error())
-			}
-			logs.Info("translated a question [" + q.Path + "]")
-			qCnt++
-			time.Sleep(time.Second)
-		}
-	}
+	//if size == 0 && (translate_flag == "qa" || translate_flag == "q") {
+	//	//	questions := models.NewQuestion().GetUntranslatedQuestions()
+	//	//	for _, q := range questions {
+	//	//		if "" == q.TitleZhCN {
+	//	//			q.TitleZhCN = spider.Translation.Translate(q.TitleEnUS, "text")
+	//	//		}
+	//	//		if "" == q.ContentZhCN {
+	//	//			q.ContentZhCN = spider.Translation.Translate(q.ContentEnUS, "html")
+	//	//		}
+	//	//		if err := q.Update(); nil != err {
+	//	//			logs.Error("update question failed: " + err.Error())
+	//	//		}
+	//	//		logs.Info("translated a question [" + q.Path + "]")
+	//	//		qCnt++
+	//	//		time.Sleep(time.Second)
+	//	//	}
+	//	//}
 
-	if size == 0 && (translate_flag == "qa" || translate_flag == "a") {
+	// 翻译所有没有翻译的回答
+	if translate_flag == "a" {
 		answers := models.NewAnswer().GetUntranslatedAnswers()
 		for _, an := range answers {
 			if "" == an.ContentZhCN {

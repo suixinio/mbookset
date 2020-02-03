@@ -118,3 +118,4 @@ modules.xml
 /store/
 *.tar.gz
 *.log
+so_tr_key.json
