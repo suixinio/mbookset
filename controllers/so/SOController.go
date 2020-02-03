@@ -128,8 +128,8 @@ func (c *SOController) GoogleTranslate() {
 	//	//}
 
 	// 翻译所有没有翻译的回答
-	if translate_flag == "a" {
-		answers := models.NewAnswer().GetUntranslatedAnswers()
+	if translate_flag == "a" && size != 0 {
+		answers := models.NewAnswer().GetUntranslatedAnswers(size)
 		for _, an := range answers {
 			if "" == an.ContentZhCN {
 				an.ContentZhCN = spider.Translation.Translate(an.ContentEnUS, "html")
