@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/astaxie/beego/orm"
+	"strconv"
 	"time"
 )
 
@@ -43,7 +44,7 @@ func (m *Answer) GetAnswers(questionID uint64) (ret *[]Answer) {
 	o := orm.NewOrm()
 	query := o.QueryTable(TNAnswer())
 	var qa []Answer
-	_, err := query.Filter("question_id", questionID).Limit(50).All(&qa);
+	_, err := query.Filter("question_id", questionID).Limit(50).All(&qa)
 	ret = &qa
 	if nil != err {
 		return
@@ -70,8 +71,8 @@ func (m *Answer) AddAnswers(ans []*Answer, qu *Question) {
 	}
 }
 
-func (m *Answer) GetUntranslatedAnswers() (ans []*Answer) {
-	sql := "select * from " + TNAnswer() + " where content_zh_cn = '' or content_zh_cn is null"
+func (m *Answer) GetUntranslatedAnswers(p int) (ans []*Answer) {
+	sql := "select * from " + TNAnswer() + " where content_zh_cn = '' or content_zh_cn is null limit " + strconv.Itoa(p)
 	o := orm.NewOrm()
 	o.Raw(sql).QueryRows(&ans)
 	return
