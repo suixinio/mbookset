@@ -18,6 +18,7 @@ jobs:
 
     - name: Build
       run: |
+        go get -u github.com/beego/bee
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o output/linux/BookSet
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 bee pack 
       
