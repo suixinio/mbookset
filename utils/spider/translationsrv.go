@@ -40,16 +40,16 @@ type translationService struct {
 
 func (srv *translationService) Translate(text string, format string) string {
 
-	//if is_proxy, err := beego.AppConfig.Bool("is_proxy"); nil != err && is_proxy {
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:1080", nil, proxy.Direct)
-	if err != nil {
-		logs.Error("can't connect to the proxy: " + err.Error())
+	if is_proxy, err := beego.AppConfig.Bool("is_proxy"); nil != err && is_proxy {
+		dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:1080", nil, proxy.Direct)
+		if err != nil {
+			logs.Error("can't connect to the proxy: " + err.Error())
+		}
+
+		httpTransport := &http.Transport{Dial: dialer.Dial}
+		http.DefaultClient.Transport = httpTransport
+
 	}
-
-	httpTransport := &http.Transport{Dial: dialer.Dial}
-	http.DefaultClient.Transport = httpTransport
-
-	//}
 
 	//ctx := context.Background()
 	ctx := context.Background()
@@ -77,8 +77,7 @@ func (srv *translationService) Translate(text string, format string) string {
 		TargetLanguageCode: "zh",
 		MimeType:           "text/html", // Mime types: "text/plain", "text/html"
 		Contents:           []string{text},
-		Model: fmt.Sprintf("projects/%s/locations/%s/models/%s", projectID, location, modelID),
-
+		Model:              fmt.Sprintf("projects/%s/locations/%s/models/%s", projectID, location, modelID),
 	}
 
 	translations, err := client.TranslateText(ctx, req)
@@ -153,8 +152,7 @@ func translateFragment(client *translate.TranslationClient, ctx context.Context,
 		TargetLanguageCode: "zh",
 		MimeType:           "text/html", // Mime types: "text/plain", "text/html"
 		Contents:           []string{fragment},
-		Model: fmt.Sprintf("projects/%s/locations/%s/models/%s", projectID, location, modelID),
-
+		Model:              fmt.Sprintf("projects/%s/locations/%s/models/%s", projectID, location, modelID),
 	}
 
 	translations, err := client.TranslateText(ctx, req)
