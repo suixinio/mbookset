@@ -17,10 +17,18 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build
-      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o output/linux/BookSet
+      run: |
+        - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o output/linux/BookSet
+        - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 bee pack 
       
-    - name: Upload artifact
+    - name: Upload artifact-linux
       uses: actions/upload-artifact@v1.0.0
       with:
-        name: bookset-linux-latest
+        name: bookset-linux-latest-linux
         path: output/linux/BookSet
+
+    - name: Upload artifact pack
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: bookset-linux-latest-pack
+        path: mbook.tar.gz
