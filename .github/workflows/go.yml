@@ -18,8 +18,8 @@ jobs:
 
     - name: Build
       run: |
-        - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o output/linux/BookSet
-        - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 bee pack 
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o output/linux/BookSet
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 bee pack 
       
     - name: Upload artifact-linux
       uses: actions/upload-artifact@v1.0.0
